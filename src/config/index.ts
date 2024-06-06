@@ -30,7 +30,7 @@ class AppConfig {
         return this;
     }
 
-    static getConfig(key: string): string | undefined {
+    static getConfig(key: string): string {
         return this.configs[key];
     }
 }
