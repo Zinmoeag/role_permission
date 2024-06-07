@@ -3,9 +3,10 @@ import 'dotenv/config'
 import express from "express";
 import "./config";
 import router from './routes';
-import { signJwt, verifyJwt } from './helper';
+import { signJwt, signWithRS256, verifyJwt, verifyWithRS256 } from './helper';
 import { verify } from 'crypto';
 import { copyFileSync } from 'fs';
+import AppConfig from './config';
 
 
 const app = express();
@@ -35,4 +36,27 @@ const token = signJwt(
 
 const payload = verifyJwt(token);
 
-console.log(payload);
+// rs256 key
+
+const access_token = signWithRS256(
+    {
+        data : user,
+    },
+    "ACCESS_TOKEN_PRIVATE_KEY",
+    {
+        expiresIn : "60"
+    }
+)
+
+
+const refresh_token = signWithRS256(
+    {
+        data : user,
+    },
+    "REFRESH_TOKEN_PRIVATE_KEY",
+    {
+        expiresIn  :"60"
+    }
+)
+
+console.log(access_token, refresh_token)
