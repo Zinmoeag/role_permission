@@ -7,7 +7,7 @@ import SeederModel from "./model/SeederModel";
 const seeders : SeederModel[] = [
     new RoleSeeder(),
     new UserSeeder(),
-    new PersmissionSeeder(),
+    // new PersmissionSeeder(),
 ]
 
 const main = async () => {

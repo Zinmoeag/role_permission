@@ -27,7 +27,7 @@ export const verifyJwt = <T>(token : string) : T | null => {
 
 
 ///RS256
-export const signWithRS256 = (payload : object, key : "ACCESS_TOKEN_PRIVATE_KEY" | "REFRESH_TOKEN_PRIVATE_KEY", options? : SignOptions) => {
+export const signWithRS256 = (payload : object, key : "ACCESS_TOKEN_PRIVATE_KEY" | "REFRESH_TOKEN_PRIVATE_KEY", options : SignOptions) => {
 
     const encodedPrivateKey = Buffer.from(AppConfig.getConfig(key), "base64").toString("ascii");
     

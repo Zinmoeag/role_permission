@@ -11,6 +11,7 @@ class UserSeeder extends SeederModel
                 ...Array.from({length  : 10}).map(() => ({
                     name : faker.internet.userName(),
                     email : faker.internet.email(),
+                    password : faker.internet.password(),
                 }))
             ]
         })

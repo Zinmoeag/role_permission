@@ -3,3 +3,5 @@ node_modules
 .env
 database/
 dist/
+prisma/database
+prisma/base
