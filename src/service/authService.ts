@@ -55,7 +55,14 @@ export default class AuthService extends Service {
                     role : true
                 }
             })
-            const user = this.exclude(rawUser)      
+            
+            const user = {
+                id : rawUser.id,
+                name : rawUser.name,
+                email : rawUser.email,
+                roleId : rawUser.roleId,
+                role_name : rawUser.role.role_name,
+            }
 
             const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
                 expiresIn : '20s'
