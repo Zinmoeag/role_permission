@@ -1,5 +1,6 @@
 import { Response, Request, NextFunction } from "express";
 import { signWithRS256, verifyWithRS256 } from "../helper";
+import AppError, { errorKinds } from "../utils/AppError";
 
 const authMiddleWare = (
     req : Request, 
@@ -9,15 +10,20 @@ const authMiddleWare = (
 
     const token = req.cookies.ACCESS_TOKEN;
     if(!token){
-        return res.sendStatus(403) 
+        return next(AppError.new(errorKinds.notAuthorized , "Not Authorized").response(res)); 
     }
     try{
         verifyWithRS256(token, "ACCESS_TOKEN_PUBLIC_KEY");
     }catch(e){
-        console.log("expire or smth")
-        return res.sendStatus(403)
+        return next(AppError.new(errorKinds.invalidToken, "invalid Token").response(res));
     }
     next();
 }
 
 export default authMiddleWare;
+
+
+//error Payload
+const payload = {
+    
+}
