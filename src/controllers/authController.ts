@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { signWithRS256, verifyWithRS256 } from "../helper";
+import bcrypt from "bcrypt";
 import prisma from "../../prisma/client";
 import { z } from "zod";
 import { ReturnUser } from "../types/user";
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
-import { emitWarning } from "process";
+
 
 const service = new AuthService();
 
@@ -150,6 +151,15 @@ class AuthController {
             "Invalid Email"
         ).response(res, loginValidationFailedPayload)
     )
+
+    const isPasswordMatch = await bcrypt.compare(cleanData.data.password, foundUser.password);
+    if(isPasswordMatch) return (
+      AppError.new(
+        errorKinds.validationFailed, 
+        "Invalid Email"
+      ).response(res, loginValidationFailedPayload)
+    )
+
 
   }
 }

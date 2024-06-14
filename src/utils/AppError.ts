@@ -11,8 +11,6 @@ type errorPayload<T extends payload> = {
     errors? : T | {}
 }
 
-
-
 export const errorKinds = {
     invalidToken : "invalidToken",
     internalServerError : "internalErrorServer",
@@ -68,7 +66,6 @@ class AppError extends Error {
             case errorKinds.validationFailed :
                 error_status = StatusCode.UnprocessableEntity
         }
-
 
         res
             .status(error_status)
