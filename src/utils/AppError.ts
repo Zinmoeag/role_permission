@@ -1,4 +1,4 @@
-import { Payload } from "@prisma/client/runtime/library";
+import { Payload, makeStrictEnum } from "@prisma/client/runtime/library";
 import { StatusCode } from "./Status";
 import { Response } from "express";
 
@@ -15,20 +15,24 @@ export const errorKinds = {
     invalidToken : "invalidToken",
     internalServerError : "internalErrorServer",
     validationFailed : "validationFailed",
+    invalidCredential : "invalidCredential",
     notFound : "notFound",
-    notAuthorized : "notAuthorized", 
+    notAuthorized : "notAuthorized",
+    alreadyExist : "alreadyExist",
 } as const;
-
-
 
 export type errorKindsType = typeof errorKinds[keyof typeof errorKinds]
 
+export const isErrorKinds = (message : any) : message is errorKindsType => {
+    return Object.values(errorKinds).includes(message);
+}
 
 class AppError extends Error {
+     
     constructor(
         public error : errorKindsType, 
         public message : string, 
-        payload? : object
+        public payload? : payload,
     ) {
         super();
     }
@@ -36,20 +40,22 @@ class AppError extends Error {
     static new(
         error : errorKindsType = errorKinds.internalServerError,
         message : string = "internal Server Error", 
+        payload? : payload 
     ){ 
-        return new AppError(error, message);
+        return payload 
+            ? new AppError(error, message, payload)
+            : new AppError(error, message)
     }
 
-    errorPayload <T extends payload>(payload? : T) : errorPayload<T> | object {
+    errorPayload <T extends payload>(payload? : T) : errorPayload<T | {}> {
         return {
             message : this.message,
             errors : payload ? payload : {}
         }
-    }   
-
-    response(res : Response, payload? : payload){
+    }
+    
+    getStatus(){
         let error_status : StatusCode = StatusCode.InternalServerError;
-
         switch(this.error){
             case errorKinds.internalServerError : 
                 error_status = StatusCode.InternalServerError
@@ -65,11 +71,23 @@ class AppError extends Error {
                 break;
             case errorKinds.validationFailed :
                 error_status = StatusCode.UnprocessableEntity
+                break;
+            case errorKinds.invalidCredential : 
+                error_status = StatusCode.UnprocessableEntity
+                break;
+            case errorKinds.alreadyExist : 
+                error_status = StatusCode.Conflict
+                break;
         }
+        return error_status;
+    }
 
-        res
-            .status(error_status)
-            .json(payload && this.errorPayload(payload));
+    response(res : Response){
+
+        const error_status = this.getStatus();
+
+        return res.status(error_status)
+            .json(this.errorPayload(this.payload)).end();
     }
 }
 
