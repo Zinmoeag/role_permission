@@ -21,9 +21,3 @@ const authMiddleWare = (
 }
 
 export default authMiddleWare;
-
-
-//error Payload
-const payload = {
-    
-}

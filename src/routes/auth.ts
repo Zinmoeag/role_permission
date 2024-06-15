@@ -7,8 +7,7 @@ const authRouter = Router();
 
 authRouter.post('/register', authController.registerController)
 
-authRouter.post("/login", async (req, res, next) => {
-})
+authRouter.post("/login", authController.loginController)
 
 authRouter.post("/refreshToken", authController.refreshTokenController);
 

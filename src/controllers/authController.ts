@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { signWithRS256, verifyWithRS256 } from "../helper";
-import bcrypt from "bcrypt";
 import prisma from "../../prisma/client";
 import { z } from "zod";
 import { ReturnUser } from "../types/user";
@@ -27,11 +26,8 @@ class AuthController {
     const refreshToken = req.cookies.jwt;
 
     if (!refreshToken) {
-      return next(
-        AppError.new(errorKinds.invalidToken, "invalid refresh Token").response(
-          res
-        )
-      );
+      return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
+          .response(res)
     }
 
     try {
@@ -45,7 +41,7 @@ class AuthController {
           AppError.new(
             errorKinds.invalidToken,
             "invalid refresh Token"
-          ).response(res)
+          )
         );
 
       const foundUser = await prisma.user.findUnique({
@@ -70,11 +66,8 @@ class AuthController {
       });
       return res.status(200).json({ accessToken });
     } catch (e) {
-      return next(
-        AppError.new(errorKinds.invalidToken, "invalid refresh Token").response(
-          res
-        )
-      );
+      return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
+          .response(res)
     }
   }
 
@@ -82,43 +75,30 @@ class AuthController {
     //validation
     const cleanData = loginCredentialSchema.safeParse(req.body);
     if (!cleanData.success) {
-      return next(
-        AppError.new(errorKinds.validationFailed, "validation Failed").response(
-          res,
+      return AppError.new(
+          errorKinds.validationFailed, 
+          "validation Failed",
           cleanData.error.formErrors.fieldErrors
         )
-      );
+        .response(res)
     }
-
-    const isEmailUsed = await prisma.user.findFirst({
-      where: {
-        email: cleanData.data.email,
-      },
-    });
-
-    //email unique
-    if (isEmailUsed)
-      return next(
-        AppError.new(
-          errorKinds.validationFailed,
-          "Email is already is exist"
-        ).response(res, { email: ["email is already used"] })
-      );
 
     try {
       const { accessToken, refreshToken } = await service.register(
         cleanData.data
       );
-
       //set Cookies
-      // res.cookie('ACCESS_TOKEN', accessToken, {httpOnly : true, secure : true});
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
       return res.status(200).json({ accessToken }).end();
+
     } catch (e) {
-      return next(
+      if(e instanceof AppError){
+        return e.response(res)
+      }
+      next(
         AppError.new(
           errorKinds.internalServerError,
-          "Internal Server Error"
+          "internal server error"
         ).response(res)
       );
     }
@@ -126,43 +106,30 @@ class AuthController {
 
   async loginController(req: Request, res: Response, next: NextFunction){
     const cleanData = loginCredentialSchema.safeParse(req.body);
-    if(!cleanData.success){
-        return(
-            AppError.new(errorKinds.validationFailed, "validation Failed").response(
-                res,
-                cleanData.error.formErrors.fieldErrors
-            )
-        )
+    if(!cleanData.success) return AppError.new(
+              errorKinds.validationFailed, 
+              "validation Failed",
+              cleanData.error.formErrors.fieldErrors
+              ).response(res)
+
+    try{
+      const {accessToken, refreshToken} = await service.login(cleanData.data);
+      res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
+      return res.status(200).json({ accessToken }).end();
+
+    }catch(e){
+      //error handling
+      if(e instanceof AppError){
+        return e.response(res);
+      }
+      return AppError.new(
+        errorKinds.internalServerError,
+        "internal Server Error",
+      ).response(res);
     }
-    const foundUser = await prisma.user.findFirst({
-        where : {
-            email : cleanData.data.email,
-        }
-    })
-
-    const loginValidationFailedPayload = {
-        email : ['Invalid Email'],
-        password : ["invalid Password"]
-    }
-
-    if(!foundUser) return (
-        AppError.new(
-            errorKinds.validationFailed,
-            "Invalid Email"
-        ).response(res, loginValidationFailedPayload)
-    )
-
-    const isPasswordMatch = await bcrypt.compare(cleanData.data.password, foundUser.password);
-    if(isPasswordMatch) return (
-      AppError.new(
-        errorKinds.validationFailed, 
-        "Invalid Email"
-      ).response(res, loginValidationFailedPayload)
-    )
-
-
   }
 }
 
 const authController = new AuthController();
 export default authController;
+

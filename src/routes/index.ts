@@ -4,7 +4,6 @@ import userRouters from "./user";
 import authRouter from "./auth";
 import homeRouter from "./home";
 import authMiddleWare from "../middlewares/authMiddleware";
-import AppError, { errorKinds } from "../utils/AppError";
 
 const router = Router();
 
@@ -21,7 +20,7 @@ router.get("/", (req: Request, res: Response, next: NextFunction): void => {
     res.sendStatus(200);
     return;
   }
-  next("hey");
+  next();
 });
 
 
@@ -29,15 +28,9 @@ router.use(authRouter);
 router.use("/user", userRouters);
 router.use("/home", authMiddleWare, homeRouter);
 
-// //error handling
-router.use((err: any, req: Request, res: Response, next: NextFunction) => {
-
-  if(err instanceof Error){
-    console.log('loging error')
-    console.log(err.message, err)
-  }
-  res.sendStatus(200);
-  // AppError.new(errorKinds.)
+// not found route
+router.use((req: Request, res: Response, next: NextFunction) => {
+  res.sendStatus(404);
 });
 
 export default router;
