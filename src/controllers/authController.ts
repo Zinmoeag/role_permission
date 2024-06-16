@@ -71,7 +71,7 @@ class AuthController {
     }
   }
 
-  async registerController(req: Request, res: Response, next: NextFunction) {
+  async register(req: Request, res: Response, next: NextFunction) {
     //validation
     const cleanData = loginCredentialSchema.safeParse(req.body);
     if (!cleanData.success) {
@@ -104,7 +104,7 @@ class AuthController {
     }
   }
 
-  async loginController(req: Request, res: Response, next: NextFunction){
+  async login(req: Request, res: Response, next: NextFunction){
     const cleanData = loginCredentialSchema.safeParse(req.body);
     if(!cleanData.success) return AppError.new(
               errorKinds.validationFailed, 
@@ -127,6 +127,15 @@ class AuthController {
         "internal Server Error",
       ).response(res);
     }
+  }
+
+  logout(
+    req : Request,
+    res : Response,
+    next : NextFunction,
+  ){
+    res.clearCookie("jwt")
+    res.status(204).json({message : "logout success"}).end()
   }
 }
 

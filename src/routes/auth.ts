@@ -1,13 +1,13 @@
 import { Router } from "express";
-import AuthService from "../service/authService";
-import {z} from "zod";
 import authController from "../controllers/authController";
 
 const authRouter = Router();
 
-authRouter.post('/register', authController.registerController)
+authRouter.post('/register', authController.register)
 
-authRouter.post("/login", authController.loginController)
+authRouter.post("/login", authController.login);
+
+authRouter.post("/logout", authController.logout);
 
 authRouter.post("/refreshToken", authController.refreshTokenController);
 
