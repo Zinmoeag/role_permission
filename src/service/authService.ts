@@ -68,7 +68,7 @@ export default class AuthService extends Service {
         }
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : '20s'
+            expiresIn : '5m'
         });
         const refreshToken = signWithRS256(user, 'REFRESH_TOKEN_PRIVATE_KEY', {
             expiresIn : "1d"
@@ -113,7 +113,7 @@ export default class AuthService extends Service {
         }
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : "20s"
+            expiresIn : "5m"
         });
 
         const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY",{

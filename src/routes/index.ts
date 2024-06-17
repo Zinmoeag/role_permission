@@ -13,17 +13,6 @@ router.use((req, res, next) => {
   next();
 });
 
-router.get("/", (req: Request, res: Response, next: NextFunction): void => {
-  const isAuth = false;
-
-  if (isAuth) {
-    res.sendStatus(200);
-    return;
-  }
-  next();
-});
-
-
 router.use(authRouter);
 router.use("/user", userRouters);
 router.use("/home", authMiddleWare, homeRouter);

@@ -62,9 +62,10 @@ class AuthController {
       };
 
       const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
-        expiresIn: "20s",
+        expiresIn: "1d",
       });
       return res.status(200).json({ accessToken });
+      
     } catch (e) {
       return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
           .response(res)

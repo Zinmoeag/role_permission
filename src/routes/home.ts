@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { verifyWithRS256 } from "../helper";
 
 const homeRouter = Router();
 

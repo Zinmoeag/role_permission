@@ -47,7 +47,13 @@ export const verifyWithRS256 = <T>(token : string, key : "ACCESS_TOKEN_PUBLIC_KE
     try{
         const publcKey = Buffer.from(AppConfig.getConfig(key), "base64").toString("ascii");
         
-        const decoded = jwt.verify(token, publcKey)
+        const decoded = jwt.verify(
+            token, 
+            publcKey,
+            {
+                algorithms : ["RS256"],
+            }
+        )
     
         return decoded as T
     }catch(e){
