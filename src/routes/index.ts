@@ -7,12 +7,6 @@ import authMiddleWare from "../middlewares/authMiddleware";
 
 const router = Router();
 
-//the whole middleware
-router.use((req, res, next) => {
-  console.log("whoe middleware is running");
-  next();
-});
-
 router.use(authRouter);
 router.use("/user", userRouters);
 router.use("/home", authMiddleWare, homeRouter);

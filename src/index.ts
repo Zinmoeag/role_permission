@@ -5,8 +5,12 @@ import "./config";
 import router from './routes';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
+import logger from './middlewares/logger';
 
 const app = express();
+
+app.use(logger);
+
 app.use(cookieParser())
 app.use(bodyParser.json());
 
