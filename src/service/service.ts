@@ -1,3 +1,4 @@
+import { exclude } from "../helper"
 export default abstract class Service {
     abstract _exclude : string[]
 
@@ -13,10 +14,7 @@ export default abstract class Service {
     // }
 
     exclude(data : Object){
-        const filteredEntries = Object.entries(data).filter(
-            ([key]) => !this._exclude.includes(key)
-        )
-
-        return Object.fromEntries(filteredEntries)
+        const filteredEntries = exclude(this._exclude, data);
+        return filteredEntries;
     }
 }

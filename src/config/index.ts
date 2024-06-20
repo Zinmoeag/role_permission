@@ -1,4 +1,4 @@
-import applicationConfig from './application';
+import applicationConfig,{configType} from './application';
 
 class AppConfig {
     private static _instance: AppConfig;
@@ -16,7 +16,7 @@ class AppConfig {
         return this._instance;
     }
 
-    static register(configs : { [key: string]: string | undefined }) : AppConfig{
+    static register(configs : { [key: string]: string | undefined}) : AppConfig{
 
         this.getInstance();
 
@@ -30,8 +30,11 @@ class AppConfig {
         return this;
     }
 
-    static getConfig(key: string): string {
-        return this.configs[key];
+    static getConfig(key: configType): string {
+        if (key === undefined || !(key in this.configs)) {
+            throw new Error(`Invalid config key: ${key}`);
+        }
+        return this.configs[key as keyof typeof this.configs];
     }
 }
 

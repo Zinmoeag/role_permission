@@ -1,8 +1,16 @@
 import { Response, Request, NextFunction } from "express";
-import { verifyWithRS256 } from "../helper";
+import { exclude, verifyWithRS256 } from "../helper";
 import AppError, { errorKinds } from "../utils/AppError";
+import prisma from "../../prisma/client";
+import { ReturnUser } from "../types/user";
+import {z} from "zod";
 
-const authMiddleWare = (
+
+export interface AuthRequest extends Request {
+    user : z.infer<typeof ReturnUser>
+}
+
+const authMiddleWare = async (
     req : Request, 
     res : Response, 
     next : NextFunction
@@ -13,20 +21,41 @@ const authMiddleWare = (
     if(!token || !token.startsWith("Bearer ")) {
         return AppError.new(errorKinds.notAuthorized , "Not Authorized").response(res);
     }
-
     const accessToken = token.split(" ")[1];
 
     if(!accessToken){
         return AppError.new(errorKinds.notAuthorized , "Not Authorized").response(res);
     }
-    
     try{
-        verifyWithRS256(accessToken, "ACCESS_TOKEN_PUBLIC_KEY");
+        const userFromToken : any = verifyWithRS256(accessToken, "ACCESS_TOKEN_PUBLIC_KEY");
+
+        if(!userFromToken){
+            return AppError.new(errorKinds.notAuthorized , "token is not present").response(res);
+        }
+        const user = await prisma.user.findUnique({
+            where : {
+                id : userFromToken.id
+            },
+            include : {
+                role : true
+            }
+        });
+
+        if(!user) return AppError.new(errorKinds.notAuthorized, "token is not invalid").response(res);
+
+        const authReq = req as AuthRequest;
+        authReq.user = {
+            id : user.id,
+            name : user.name,
+            email : user.email,
+            roleId : user.role.role_id,
+            role_name : user.role.role_name,
+        }
+        
     }catch(e){
         return AppError.new(errorKinds.invalidToken, "invalid Token").response(res);
     }
-
-    next();
+    return next();
 }
 
 

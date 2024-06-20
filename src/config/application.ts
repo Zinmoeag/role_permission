@@ -7,6 +7,8 @@ const applicationConfig = {
 
     ACCESS_TOKEN_PUBLIC_KEY : process.env.ACCESS_TOKEN_PUBLIC_KEY,
     REFRESH_TOKEN_PUBLIC_KEY : process.env.REFRESH_TOKEN_PUBLIC_KEY,
-};
+} as const;
+
+export type configType = typeof applicationConfig[keyof typeof applicationConfig]
 
 export default applicationConfig;

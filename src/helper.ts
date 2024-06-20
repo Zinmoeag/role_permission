@@ -5,25 +5,25 @@ import {z} from "zod"; ;
 
 
 //sign token
-export const signJwt = (payload : object, options : SignOptions) : string => {
-    const key = AppConfig.getConfig("jwtSecretKey");    
+// export const signJwt = (payload : object, options : SignOptions) : string => {
+//     const key = AppConfig.getConfig("jwtSecretKey");    
     
-    return jwt.sign(payload, key, {
-        algorithm : 'HS256',
-    })
-}
+//     return jwt.sign(payload, key, {
+//         algorithm : 'HS256',
+//     })
+// }
 
 
-//verify
-export const verifyJwt = <T>(token : string) : T | null => {
-    try{        
-        const decoded = jwt.verify(token, AppConfig.getConfig("jwtSecretKey")) as T
+// //verify
+// export const verifyJwt = <T>(token : string) : T | null => {
+//     try{        
+//         const decoded = jwt.verify(token, AppConfig.getConfig("jwtSecretKey")) as T
 
-        return decoded;
-    }catch(err){
-        return null;
-    }
-}
+//         return decoded;
+//     }catch(err){
+//         return null;
+//     }
+// }
 
 
 ///RS256
@@ -43,7 +43,6 @@ export const signWithRS256 = (payload : z.infer<typeof ReturnUser>, key : "ACCES
 }
 
 export const verifyWithRS256 = <T>(token : string, key : "ACCESS_TOKEN_PUBLIC_KEY" | "REFRESH_TOKEN_PUBLIC_KEY") : T | null => {
-    // return  "hello
     try{
         const publcKey = Buffer.from(AppConfig.getConfig(key), "base64").toString("ascii");
         
@@ -59,4 +58,12 @@ export const verifyWithRS256 = <T>(token : string, key : "ACCESS_TOKEN_PUBLIC_KE
     }catch(e){
         throw new Error("invalid token")
     }
+}
+
+export const exclude = (excludeList: string[], data : Object) => {
+    const filteredEntries = Object.entries(data).filter(
+        ([key]) => !excludeList.includes(key)
+    )
+
+    return Object.fromEntries(filteredEntries)
 }

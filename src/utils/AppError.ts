@@ -1,4 +1,3 @@
-import { Payload, makeStrictEnum } from "@prisma/client/runtime/library";
 import { StatusCode } from "./Status";
 import { Response } from "express";
 
@@ -19,6 +18,7 @@ export const errorKinds = {
     notFound : "notFound",
     notAuthorized : "notAuthorized",
     alreadyExist : "alreadyExist",
+    forbidden : "forbidden"
 } as const;
 
 export type errorKindsType = typeof errorKinds[keyof typeof errorKinds]
@@ -67,7 +67,7 @@ class AppError extends Error {
                 error_status = StatusCode.NotFound
                 break;
             case errorKinds.notAuthorized : 
-                error_status = StatusCode.Forbidden
+                error_status = StatusCode.Unauthorized
                 break;
             case errorKinds.validationFailed :
                 error_status = StatusCode.UnprocessableEntity
@@ -77,6 +77,9 @@ class AppError extends Error {
                 break;
             case errorKinds.alreadyExist : 
                 error_status = StatusCode.Conflict
+                break;
+            case errorKinds.forbidden : 
+                error_status = StatusCode.Forbidden
                 break;
         }
         return error_status;
