@@ -6,13 +6,22 @@ import homeRouter from "./home";
 import authMiddleWare, { AuthRequest } from "../middlewares/authMiddleware";
 import CheckRoleMiddleware from "../middlewares/checkRoleMiddleware";
 import dashboardRouter from "./dashboard";
+import { getGoogleOauthToken } from "../service/oauthService";
+import oauthController from "../controllers/oauthController";
+import oauthRouter from "./oauth";
 
 const router = Router();
 
 router.use(authRouter);
 router.use("/user", authMiddleWare, userRouters);
+router.use("/oauth", oauthRouter);
 router.use("/dashboard", authMiddleWare, CheckRoleMiddleware.isAdmin, dashboardRouter)
 router.use("/home", authMiddleWare, homeRouter);
+
+router.get("/test", (req : Request, res : Response, next : NextFunction) => {
+  // getGoogleOauthToken();
+  res.send("test route").status(200).end();
+})
 
 // not found route
 router.use((req: Request, res: Response, next: NextFunction) => {
