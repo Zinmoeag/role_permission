@@ -5,4 +5,4 @@ database/
 dist/
 prisma/database
 prisma/base
-logs/reqlog.txt
+src/logs/reqlog.txt

@@ -65,3 +65,4 @@
 2024-06-20T04-22:18.246Z	GET	undefined	/dashboard
 2024-06-20T04-22:39.081Z	POST	undefined	/login
 2024-06-20T04-23:03.002Z	GET	undefined	/dashboard
+2024-06-20T10-00:46.274Z	GET	undefined	/
