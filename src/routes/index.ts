@@ -14,7 +14,7 @@ const router = Router();
 
 router.use(authRouter);
 router.use("/user", authMiddleWare, userRouters);
-router.use("/oauth", oauthRouter);
+router.use("/api/oauth", oauthRouter);
 router.use("/dashboard", authMiddleWare, CheckRoleMiddleware.isAdmin, dashboardRouter)
 router.use("/home", authMiddleWare, homeRouter);
 

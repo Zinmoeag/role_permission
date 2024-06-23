@@ -1,6 +1,12 @@
 import axios from "axios"
 import AppConfig from "../config";
 import qs from "qs"
+import Service from "./service";
+import GoogleOauthService from "./oauth/googleOauthService";
+import AppError, { errorKinds } from "../utils/AppError";
+import prisma from "../../prisma/client";
+import { signWithRS256 } from "../helper";
+import { ReturnToken } from "../types/authType";
 
 interface GoogleOauthToken {
     access_token: string;
@@ -20,7 +26,9 @@ interface GoogleUserResult {
     family_name: string;
     picture: string;
     locale: string;
-  }
+}
+
+type Provider = "GOOGLE";
 
 
 export const getGoogleOauthToken = async ({
@@ -29,11 +37,11 @@ export const getGoogleOauthToken = async ({
     code : string
 }) : Promise<GoogleOauthToken> => {
     const options = {
-        code,
-        client_id: AppConfig.getConfig("GOOGLE_CLIENT_ID"),
-        client_secret: AppConfig.getConfig("GOOGLE_CLIENT_SECRET"),
-        redirect_uri: AppConfig.getConfig("GOOGLE_REDIRECT_URL"),
-        grant_type: "authorization_code",
+      code,
+      client_id: AppConfig.getConfig("GOOGLE_CLIENT_ID"),
+      client_secret: AppConfig.getConfig("GOOGLE_CLIENT_SECRET"),
+      redirect_uri: AppConfig.getConfig("GOOGLE_REDIRECT_URL"),
+      grant_type: "authorization_code",
       };
 
     const targetUrl = "https://oauth2.googleapis.com/token";
@@ -48,10 +56,9 @@ export const getGoogleOauthToken = async ({
             },
           }
         );
-    
+          
         return data;
       } catch (err: any) {
-        console.log("Failed to fetch Google Oauth Tokens");
         throw new Error(err);
       }
     
@@ -77,8 +84,70 @@ export const getGoogleUser = async ({
     
         return data;
     }catch(err){
-        console.log(err);
         throw new Error("wrong id_token or access_token");
     }
+}
+
+export default class OauthService extends Service {
+
+  _exclude = [
+      "password"
+  ];
+
+  constructor(){
+      super()
+  }
+
+  async getOauthUser(provider : Provider, code : string){
+    switch(provider){
+      case "GOOGLE":
+        const googleOauthService = new GoogleOauthService(code);
+        const googleUser = await googleOauthService.do();
+        return googleUser;
+    }
+  }
+
+  async oauthHandler (provider : Provider, code : string) : Promise<ReturnToken>{
+
+      try{
+        const user = await this.getOauthUser(provider, code);
+
+
+        const newUser = await prisma.user.upsert({
+          where : {
+            email : user.email
+          },
+          update : {},
+          create : {
+            name : user.name,
+            email : user.email,
+            password : ""
+          },
+          include : {
+            role : true
+          }
+        })
+
+        const tokenUser = {
+            id : newUser.id,
+            name : newUser.name,
+            email : newUser.email,
+            roleId : newUser.role.role_id,
+            role_name : newUser.role.role_name
+        }
+
+        const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : "1d"});
+        const refreshToken = signWithRS256(tokenUser, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: "7d"});
+
+        return {accessToken, refreshToken};
+
+      }catch(err){
+        if(err instanceof AppError){
+          throw err;
+        }
+        throw AppError.new(errorKinds.badRequest, "Bad Request");
+      }
+  }
+
 
 }

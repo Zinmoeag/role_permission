@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import { signWithRS256 } from "../helper";
 import Service from "./service";
 import AppError, { errorKinds, errorKindsType } from "../utils/AppError";
-import { IncomingMessage } from "http";
 
 const _saltRound = 10;
 

@@ -3,6 +3,6 @@ import oauthController from "../controllers/oauthController";
 
 const oauthRouter = Router();
 
-oauthRouter.get("/login",oauthController.googleOauth);
+oauthRouter.get("/google",oauthController.googleOauth);
 
 export default oauthRouter;
