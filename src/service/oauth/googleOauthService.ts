@@ -9,10 +9,16 @@ export default class GoogleOauthService {
     constructor(private code : string){}
 
     async do(){
+
+      try{
         const {access_token, id_token} = await this.getGoogleOauthToken(this.code);
         const googleUser = await this.getGoogleUser({id_token, access_token});
 
         return googleUser;
+      }catch(err){
+        
+        throw AppError.new(errorKinds.badRequest, "Authorization failed to google");
+      }
     }
     
      private async getGoogleOauthToken(code : string) : Promise<GoogleOauthToken> {
@@ -23,8 +29,6 @@ export default class GoogleOauthService {
             redirect_uri: AppConfig.getConfig("GOOGLE_REDIRECT_URL"),
             grant_type: "authorization_code",
             };
-
-        console.log(options)
       
           const targetUrl = "https://oauth2.googleapis.com/token";
       

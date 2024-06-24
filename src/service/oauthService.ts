@@ -112,7 +112,6 @@ export default class OauthService extends Service {
       try{
         const user = await this.getOauthUser(provider, code);
 
-
         const newUser = await prisma.user.upsert({
           where : {
             email : user.email
@@ -145,9 +144,7 @@ export default class OauthService extends Service {
         if(err instanceof AppError){
           throw err;
         }
-        throw AppError.new(errorKinds.badRequest, "Bad Request");
+        throw AppError.new(errorKinds.internalServerError, "Internal Server Error");
       }
   }
-
-
 }

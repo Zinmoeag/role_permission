@@ -3,14 +3,10 @@ import bcrypt from "bcrypt";
 import { signWithRS256 } from "../helper";
 import Service from "./service";
 import AppError, { errorKinds, errorKindsType } from "../utils/AppError";
+import {z} from "zod";
+import { LoginCredentialSchema, RegisterCredentialSchema } from "../schema/authSchema";
 
 const _saltRound = 10;
-
-type User = {
-    name : string,
-    email : string,
-    password : string,
-}
 
 type ReturnToken = {
     accessToken : string,
@@ -27,7 +23,7 @@ export default class AuthService extends Service {
         super()
     }
 
-    async register(data : User) : Promise<ReturnToken>{
+    async register(data : z.infer<typeof RegisterCredentialSchema>) : Promise<ReturnToken>{
 
         const isEmailUsed = await prisma.user.findFirst({
             where: {
@@ -76,7 +72,7 @@ export default class AuthService extends Service {
         return {accessToken, refreshToken}
     }
 
-    async login(data : User) : Promise<ReturnToken>{
+    async login(data : z.infer<typeof LoginCredentialSchema>) : Promise<ReturnToken>{
         const foundUser = await prisma.user.findFirst({
             where : {
                 email : data.email,

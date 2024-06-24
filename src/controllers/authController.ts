@@ -5,17 +5,10 @@ import { z } from "zod";
 import { ReturnUser } from "../types/user";
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
+import {LoginCredentialSchema , RegisterCredentialSchema} from "../schema/authSchema";
 
 
 const service = new AuthService();
-
-const loginCredentialSchema = z.object({
-  name: z.string(),
-  email: z.string().email({
-    message: "Invalid email address",
-  }),
-  password: z.string().min(8, "at least should have 8").max(20, "20 is max"),
-});
 
 class AuthController {
   async refreshTokenController(
@@ -74,7 +67,7 @@ class AuthController {
 
   async register(req: Request, res: Response, next: NextFunction) {
     //validation
-    const cleanData = loginCredentialSchema.safeParse(req.body);
+    const cleanData = RegisterCredentialSchema.safeParse(req.body);
     if (!cleanData.success) {
       return AppError.new(
           errorKinds.validationFailed, 
@@ -106,7 +99,7 @@ class AuthController {
   }
 
   async login(req: Request, res: Response, next: NextFunction){
-    const cleanData = loginCredentialSchema.safeParse(req.body);
+    const cleanData = LoginCredentialSchema.safeParse(req.body);
     if(!cleanData.success) return AppError.new(
               errorKinds.validationFailed, 
               "validation Failed",

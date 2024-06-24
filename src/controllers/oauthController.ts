@@ -30,12 +30,12 @@ class OauthController {
             const {accessToken, refreshToken} : ReturnToken = await oauthService.oauthHandler("GOOGLE", code);
 
             res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-            return res.status(200).json({accessToken}).end();
+            res.json({accessToken}).end(); 
+
         }catch(err){
             if(err instanceof AppError){
                 return err.response(res);
             }
-            
             return AppError.new(errorKinds.internalServerError, "internal server error").response(res);
         }
     }
@@ -43,4 +43,3 @@ class OauthController {
 
 const oauthController = new OauthController();
 export default oauthController;
-
