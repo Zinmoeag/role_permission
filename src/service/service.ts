@@ -1,20 +1,24 @@
 import { exclude } from "../helper"
-export default abstract class Service {
-    abstract _exclude : string[]
+import {z} from "zod";
+import { ReturnUser } from "../types/user";
 
-    // exclude<User, Key extends keyof User> (
-    //     user: User & Record<string, any>,
-    //     keys: Key[]
-    //     ): Omit<User, Key> {
-    //     const filteredEntries = Object.entries(user).filter(
-    //         ([key]) => !keys.includes(key as Key)
-    //     );
-        
-    //     return Object.fromEntries(filteredEntries) as unknown as Omit<User, Key>;
-    // }
+export default abstract class Service {
+    abstract _exclude : string[];
 
     exclude(data : Object){
         const filteredEntries = exclude(this._exclude, data);
+        // console.log("filter",filteredEntries)
         return filteredEntries;
+    }
+
+    getUser(rawUser : any) : z.infer<typeof ReturnUser>{
+        return {
+            id : rawUser.id,
+            name : rawUser.name,
+            email : rawUser.email,
+            roleId : rawUser.roleId,
+            role_name : rawUser.role.role_name,
+            permission : rawUser.role.permission,
+        }
     }
 }

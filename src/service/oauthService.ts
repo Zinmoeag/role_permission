@@ -7,6 +7,8 @@ import AppError, { errorKinds } from "../utils/AppError";
 import prisma from "../../prisma/client";
 import { signWithRS256 } from "../helper";
 import { ReturnToken } from "../types/authType";
+import { z } from "zod";
+import { ReturnUser } from "../types/user";
 
 interface GoogleOauthToken {
     access_token: string;
@@ -123,17 +125,15 @@ export default class OauthService extends Service {
             password : ""
           },
           include : {
-            role : true
-          }
+            role : {
+              include : {
+                permissions : true,
+              }
+            }
+          },
         })
 
-        const tokenUser = {
-            id : newUser.id,
-            name : newUser.name,
-            email : newUser.email,
-            roleId : newUser.role.role_id,
-            role_name : newUser.role.role_name
-        }
+        const tokenUser : z.infer<typeof ReturnUser> = this.getUser(newUser);
 
         const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : "1d"});
         const refreshToken = signWithRS256(tokenUser, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: "7d"});

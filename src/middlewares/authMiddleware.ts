@@ -50,6 +50,7 @@ const authMiddleWare = async (
             email : user.email,
             roleId : user.role.role_id,
             role_name : user.role.role_name,
+            permission : user.role.permission,
         }
         
     }catch(e){

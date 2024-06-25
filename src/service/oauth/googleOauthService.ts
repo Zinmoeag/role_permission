@@ -63,7 +63,7 @@ export default class GoogleOauthService {
                 headers : {
                     Authorization : `Bearer ${id_token}`
                 }
-            })
+            })   
         
             return data;
         }catch(err){

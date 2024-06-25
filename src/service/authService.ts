@@ -2,21 +2,26 @@ import prisma from "../../prisma/client";
 import bcrypt from "bcrypt";
 import { signWithRS256 } from "../helper";
 import Service from "./service";
-import AppError, { errorKinds, errorKindsType } from "../utils/AppError";
+import AppError, { errorKinds } from "../utils/AppError";
 import {z} from "zod";
 import { LoginCredentialSchema, RegisterCredentialSchema } from "../schema/authSchema";
+import { ReturnUser } from "../types/user";
+
 
 const _saltRound = 10;
 
 type ReturnToken = {
     accessToken : string,
     refreshToken : string,
+    user : z.infer<typeof ReturnUser>,
 }
 
 export default class AuthService extends Service {
 
     _exclude = [
-        "password"
+        "password",
+        "role.id",
+        "permission.id"
     ];
 
     constructor(){
@@ -50,17 +55,15 @@ export default class AuthService extends Service {
                 password : hashedPassword,
             },
             include : {
-                role : true
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
             }
         })
         
-        const user = {
-            id : rawUser.id,
-            name : rawUser.name,
-            email : rawUser.email,
-            roleId : rawUser.roleId,
-            role_name : rawUser.role.role_name,
-        }
+        const user : z.infer<typeof ReturnUser> = this.getUser(rawUser);
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
             expiresIn : '5m'
@@ -69,7 +72,7 @@ export default class AuthService extends Service {
             expiresIn : "1d"
         });
         
-        return {accessToken, refreshToken}
+        return {accessToken, refreshToken, user};
     }
 
     async login(data : z.infer<typeof LoginCredentialSchema>) : Promise<ReturnToken>{
@@ -78,7 +81,11 @@ export default class AuthService extends Service {
                 email : data.email,
             },
             include : {
-                role : true
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
             }
         })
     
@@ -99,13 +106,7 @@ export default class AuthService extends Service {
             }
         )   
         
-        const  user ={
-            id : foundUser.id,
-            name : foundUser.name,
-            email : foundUser.email,
-            roleId  : foundUser.roleId,
-            role_name : foundUser.role.role_name,
-        }
+        const user: z.infer<typeof ReturnUser> = this.getUser(foundUser)
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
             expiresIn : "5m"
@@ -115,6 +116,23 @@ export default class AuthService extends Service {
             expiresIn : "1d"
         })
 
-        return {accessToken, refreshToken};
+        return {accessToken, refreshToken, user};
+    }
+
+    async testService(){
+        const foundUser = await prisma.user.findFirst({
+            where : {
+                email : "zin@gmail.com",
+            },
+            include : {
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
+            }
+        })
+
+        console.log(this.exclude(foundUser))
     }
 }

@@ -27,11 +27,10 @@ model Role {
   permissions RolePermission[]
 }
 
-
 model Permission {
   id    String  @id  @default(uuid())
-  permission_name  String @unique
-  description   String
+  action  String
+  resource   String
   roles RolePermission[]
 }
 

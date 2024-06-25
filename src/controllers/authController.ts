@@ -6,6 +6,7 @@ import { ReturnUser } from "../types/user";
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
 import {LoginCredentialSchema , RegisterCredentialSchema} from "../schema/authSchema";
+import { permission } from "process";
 
 
 const service = new AuthService();
@@ -42,7 +43,16 @@ class AuthController {
           id: user.id,
         },
         include: {
-          role: true,
+          role: {
+            include : {
+              role : {
+                include : {
+                  permissions : true
+                }
+              }
+            },
+          },
+
         },
       });
 
@@ -52,6 +62,7 @@ class AuthController {
         email: foundUser.email,
         roleId: foundUser.roleId,
         role_name: foundUser.role.name,
+        permission : foundUser.role.p
       };
 
       const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
@@ -78,12 +89,12 @@ class AuthController {
     }
 
     try {
-      const { accessToken, refreshToken } = await service.register(
+      const { accessToken, refreshToken, user } = await service.register(
         cleanData.data
       );
       //set Cookies
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-      return res.status(200).json({ accessToken }).end();
+      return res.status(200).json({ accessToken, user }).end();
 
     } catch (e) {
       if(e instanceof AppError){
@@ -107,9 +118,9 @@ class AuthController {
               ).response(res)
 
     try{
-      const {accessToken, refreshToken} = await service.login(cleanData.data);
+      const {accessToken, refreshToken, user} = await service.login(cleanData.data);
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-      return res.status(200).json({ accessToken }).end();
+      return res.status(200).json({ accessToken, user }).end();
 
     }catch(e){
       //error handling
@@ -130,6 +141,10 @@ class AuthController {
   ){
     res.clearCookie("jwt")
     res.status(204).json({message : "logout success"}).end()
+  }
+
+  test(req: Request, res: Response, next: NextFunction){
+    service.testService();
   }
 }
 
