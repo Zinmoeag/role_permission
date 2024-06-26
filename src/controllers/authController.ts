@@ -1,12 +1,7 @@
-import { NextFunction, Request, Response } from "express";
-import { signWithRS256, verifyWithRS256 } from "../helper";
-import prisma from "../../prisma/client";
-import { z } from "zod";
-import { ReturnUser } from "../types/user";
+import { NextFunction, Request, Response } from "express";import { z } from "zod";
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
 import {LoginCredentialSchema , RegisterCredentialSchema} from "../schema/authSchema";
-import { permission } from "process";
 
 
 const service = new AuthService();
@@ -20,59 +15,20 @@ class AuthController {
     const refreshToken = req.cookies.jwt;
 
     if (!refreshToken) {
-      return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
-          .response(res)
+      return AppError.new(errorKinds.invalidToken, "token is not present")
     }
 
     try {
-      const user = verifyWithRS256<z.infer<typeof ReturnUser>>(
-        refreshToken,
-        "REFRESH_TOKEN_PUBLIC_KEY"
-      );
-
-      if (!user)
-        return next(
-          AppError.new(
-            errorKinds.invalidToken,
-            "invalid refresh Token"
-          )
-        );
-
-      const foundUser = await prisma.user.findUnique({
-        where: {
-          id: user.id,
-        },
-        include: {
-          role: {
-            include : {
-              role : {
-                include : {
-                  permissions : true
-                }
-              }
-            },
-          },
-
-        },
-      });
-
-      const tokenUser = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        roleId: foundUser.roleId,
-        role_name: foundUser.role.name,
-        permission : foundUser.role.p
-      };
-
-      const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
-        expiresIn: "1d",
-      });
-      return res.status(200).json({ accessToken });
+      const {accessToken, user} = await service.generateAccessToken(refreshToken);
+      return res.status(200).json({ accessToken, user });
       
     } catch (e) {
-      return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
-          .response(res)
+      if(e instanceof AppError){
+        return e.response(res)
+      }else{
+        return AppError.new(errorKinds.invalidToken, "internal Server Error")
+            .response(res)
+      }
     }
   }
 
@@ -144,7 +100,9 @@ class AuthController {
   }
 
   test(req: Request, res: Response, next: NextFunction){
-    service.testService();
+    // service.testService();
+
+    res.sendStatus(200);
   }
 }
 

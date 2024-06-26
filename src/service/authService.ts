@@ -1,6 +1,6 @@
 import prisma from "../../prisma/client";
 import bcrypt from "bcrypt";
-import { signWithRS256 } from "../helper";
+import { signWithRS256, verifyWithRS256 } from "../helper";
 import Service from "./service";
 import AppError, { errorKinds } from "../utils/AppError";
 import {z} from "zod";
@@ -109,7 +109,7 @@ export default class AuthService extends Service {
         const user: z.infer<typeof ReturnUser> = this.getUser(foundUser)
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : "5m"
+            expiresIn : "20s"
         });
 
         const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY",{
@@ -117,6 +117,39 @@ export default class AuthService extends Service {
         })
 
         return {accessToken, refreshToken, user};
+    }
+
+    async generateAccessToken(refreshToken : string) : Promise<ReturnToken>{
+        const user = verifyWithRS256<z.infer<typeof ReturnUser>>(
+            refreshToken,
+            "REFRESH_TOKEN_PUBLIC_KEY"
+          );
+    
+          if (!user) throw AppError.new(errorKinds.invalidToken,"Invalid User")
+    
+          const foundUser = await prisma.user.findUnique({
+            where: {
+              id: user.id,
+            },
+            include: {
+              role: {
+               include : {
+                permissions : true
+               }
+              },
+            },
+          });
+    
+          const tokenUser = this.getUser(foundUser);
+          const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
+            expiresIn: "1d",
+          });
+
+          return {
+            accessToken, 
+            user : tokenUser,
+            refreshToken,
+          };
     }
 
     async testService(){
@@ -132,7 +165,5 @@ export default class AuthService extends Service {
                 }
             }
         })
-
-        console.log(this.exclude(foundUser))
     }
 }

@@ -54,7 +54,12 @@ const authMiddleWare = async (
         }
         
     }catch(e){
-        return AppError.new(errorKinds.invalidToken, "invalid Token").response(res);
+        console.log(e)
+        if(e instanceof AppError){
+            return e.response(res)
+        }else{
+            return AppError.new(errorKinds.internalServerError, "internal Server Error").response(res);
+        }
     }
     return next();
 }
