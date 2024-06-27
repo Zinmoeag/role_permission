@@ -24,6 +24,9 @@ export default class AuthService extends Service {
         "permission.id"
     ];
 
+    acesssTokenExp = "20s";
+    refreshTokenExp = "1d";
+
     constructor(){
         super()
     }
@@ -66,10 +69,10 @@ export default class AuthService extends Service {
         const user : z.infer<typeof ReturnUser> = this.getUser(rawUser);
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : '5m'
+            expiresIn : this.acesssTokenExp
         });
         const refreshToken = signWithRS256(user, 'REFRESH_TOKEN_PRIVATE_KEY', {
-            expiresIn : "1d"
+            expiresIn : this.refreshTokenExp
         });
         
         return {accessToken, refreshToken, user};
@@ -109,11 +112,11 @@ export default class AuthService extends Service {
         const user: z.infer<typeof ReturnUser> = this.getUser(foundUser)
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : "20s"
+            expiresIn : this.acesssTokenExp
         });
 
         const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY",{
-            expiresIn : "1d"
+            expiresIn : this.refreshTokenExp
         })
 
         return {accessToken, refreshToken, user};
@@ -142,7 +145,7 @@ export default class AuthService extends Service {
     
           const tokenUser = this.getUser(foundUser);
           const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn: "1d",
+            expiresIn: this.acesssTokenExp,
           });
 
           return {

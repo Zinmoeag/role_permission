@@ -96,6 +96,9 @@ export default class OauthService extends Service {
       "password"
   ];
 
+  acesssTokenExp = "20s";
+  refreshTokenExp = "1d";
+
   constructor(){
       super()
   }
@@ -135,8 +138,8 @@ export default class OauthService extends Service {
 
         const tokenUser : z.infer<typeof ReturnUser> = this.getUser(newUser);
 
-        const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : "1d"});
-        const refreshToken = signWithRS256(tokenUser, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: "7d"});
+        const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : this.acesssTokenExp});
+        const refreshToken = signWithRS256(tokenUser, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: this.refreshTokenExp});
 
         return {accessToken, refreshToken};
 

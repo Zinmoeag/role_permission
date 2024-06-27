@@ -22,6 +22,8 @@ class OauthController {
 
         const pathUrl = (req.query.state as string) || "/";
 
+        console.log(pathUrl);
+
         if(!code){
             return AppError.new(errorKinds.badRequest, "code is required").response(res);
         }
