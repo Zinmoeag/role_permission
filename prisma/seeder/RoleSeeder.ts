@@ -4,8 +4,10 @@ import SeederModel from "./model/SeederModel";
 
 const roles = [
     {id : 1 , name : 'USER'},
-    {id : 2 , name : "EMPLOYEE"},
+    {id : 2 , name : "ADMIN"},
 ];
+
+
 
 class RoleSeeder extends SeederModel
 {

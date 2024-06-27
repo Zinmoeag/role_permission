@@ -6,9 +6,16 @@ import router from './routes';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import logger from './middlewares/logger';
+import cors from "cors"
+
+const corsOptions = {
+    origin: "http://localhost:4000",
+    credentials: true,
+}
 
 const app = express();
 
+app.use(cors(corsOptions));
 app.use(logger);
 
 app.use(cookieParser())

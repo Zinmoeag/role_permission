@@ -18,7 +18,8 @@ export const errorKinds = {
     notFound : "notFound",
     notAuthorized : "notAuthorized",
     alreadyExist : "alreadyExist",
-    forbidden : "forbidden"
+    forbidden : "forbidden",
+    badRequest : "badRequest"
 } as const;
 
 export type errorKindsType = typeof errorKinds[keyof typeof errorKinds]
@@ -80,6 +81,9 @@ class AppError extends Error {
                 break;
             case errorKinds.forbidden : 
                 error_status = StatusCode.Forbidden
+                break;
+            case errorKinds.badRequest : 
+                error_status = StatusCode.BadRequest
                 break;
         }
         return error_status;

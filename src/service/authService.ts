@@ -1,34 +1,37 @@
 import prisma from "../../prisma/client";
 import bcrypt from "bcrypt";
-import { signWithRS256 } from "../helper";
+import { signWithRS256, verifyWithRS256 } from "../helper";
 import Service from "./service";
-import AppError, { errorKinds, errorKindsType } from "../utils/AppError";
-import { IncomingMessage } from "http";
+import AppError, { errorKinds } from "../utils/AppError";
+import {z} from "zod";
+import { LoginCredentialSchema, RegisterCredentialSchema } from "../schema/authSchema";
+import { ReturnUser } from "../types/user";
+
 
 const _saltRound = 10;
-
-type User = {
-    name : string,
-    email : string,
-    password : string,
-}
 
 type ReturnToken = {
     accessToken : string,
     refreshToken : string,
+    user : z.infer<typeof ReturnUser>,
 }
 
 export default class AuthService extends Service {
 
     _exclude = [
-        "password"
+        "password",
+        "role.id",
+        "permission.id"
     ];
+
+    acesssTokenExp = "20s";
+    refreshTokenExp = "1d";
 
     constructor(){
         super()
     }
 
-    async register(data : User) : Promise<ReturnToken>{
+    async register(data : z.infer<typeof RegisterCredentialSchema>) : Promise<ReturnToken>{
 
         const isEmailUsed = await prisma.user.findFirst({
             where: {
@@ -55,35 +58,37 @@ export default class AuthService extends Service {
                 password : hashedPassword,
             },
             include : {
-                role : true
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
             }
         })
         
-        const user = {
-            id : rawUser.id,
-            name : rawUser.name,
-            email : rawUser.email,
-            roleId : rawUser.roleId,
-            role_name : rawUser.role.role_name,
-        }
+        const user : z.infer<typeof ReturnUser> = this.getUser(rawUser);
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : '5m'
+            expiresIn : this.acesssTokenExp
         });
         const refreshToken = signWithRS256(user, 'REFRESH_TOKEN_PRIVATE_KEY', {
-            expiresIn : "1d"
+            expiresIn : this.refreshTokenExp
         });
         
-        return {accessToken, refreshToken}
+        return {accessToken, refreshToken, user};
     }
 
-    async login(data : User) : Promise<ReturnToken>{
+    async login(data : z.infer<typeof LoginCredentialSchema>) : Promise<ReturnToken>{
         const foundUser = await prisma.user.findFirst({
             where : {
                 email : data.email,
             },
             include : {
-                role : true
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
             }
         })
     
@@ -104,22 +109,64 @@ export default class AuthService extends Service {
             }
         )   
         
-        const  user ={
-            id : foundUser.id,
-            name : foundUser.name,
-            email : foundUser.email,
-            roleId  : foundUser.roleId,
-            role_name : foundUser.role.role_name,
-        }
+        const user: z.infer<typeof ReturnUser> = this.getUser(foundUser)
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : "5m"
+            expiresIn : this.acesssTokenExp
         });
 
         const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY",{
-            expiresIn : "1d"
+            expiresIn : this.refreshTokenExp
         })
 
-        return {accessToken, refreshToken};
+        return {accessToken, refreshToken, user};
+    }
+
+    async generateAccessToken(refreshToken : string) : Promise<ReturnToken>{
+        const user = verifyWithRS256<z.infer<typeof ReturnUser>>(
+            refreshToken,
+            "REFRESH_TOKEN_PUBLIC_KEY"
+          );
+    
+          if (!user) throw AppError.new(errorKinds.invalidToken,"Invalid User")
+    
+          const foundUser = await prisma.user.findUnique({
+            where: {
+              id: user.id,
+            },
+            include: {
+              role: {
+               include : {
+                permissions : true
+               }
+              },
+            },
+          });
+    
+          const tokenUser = this.getUser(foundUser);
+          const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
+            expiresIn: this.acesssTokenExp,
+          });
+
+          return {
+            accessToken, 
+            user : tokenUser,
+            refreshToken,
+          };
+    }
+
+    async testService(){
+        const foundUser = await prisma.user.findFirst({
+            where : {
+                email : "zin@gmail.com",
+            },
+            include : {
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
+            }
+        })
     }
 }

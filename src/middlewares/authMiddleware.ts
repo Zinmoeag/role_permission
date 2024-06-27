@@ -50,10 +50,16 @@ const authMiddleWare = async (
             email : user.email,
             roleId : user.role.role_id,
             role_name : user.role.role_name,
+            permission : user.role.permission,
         }
         
     }catch(e){
-        return AppError.new(errorKinds.invalidToken, "invalid Token").response(res);
+        console.log(e)
+        if(e instanceof AppError){
+            return e.response(res)
+        }else{
+            return AppError.new(errorKinds.internalServerError, "internal Server Error").response(res);
+        }
     }
     return next();
 }

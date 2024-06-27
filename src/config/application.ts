@@ -7,6 +7,11 @@ const applicationConfig = {
 
     ACCESS_TOKEN_PUBLIC_KEY : process.env.ACCESS_TOKEN_PUBLIC_KEY,
     REFRESH_TOKEN_PUBLIC_KEY : process.env.REFRESH_TOKEN_PUBLIC_KEY,
+
+    GOOGLE_CLIENT_ID : process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET : process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URL : process.env.GOOGLE_REDIRECT_URL,
+
 } as const;
 
 export type configType = typeof applicationConfig[keyof typeof applicationConfig]

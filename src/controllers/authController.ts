@@ -1,21 +1,10 @@
-import { NextFunction, Request, Response } from "express";
-import { signWithRS256, verifyWithRS256 } from "../helper";
-import prisma from "../../prisma/client";
-import { z } from "zod";
-import { ReturnUser } from "../types/user";
+import { NextFunction, Request, Response } from "express";import { z } from "zod";
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
+import {LoginCredentialSchema , RegisterCredentialSchema} from "../schema/authSchema";
 
 
 const service = new AuthService();
-
-const loginCredentialSchema = z.object({
-  name: z.string(),
-  email: z.string().email({
-    message: "Invalid email address",
-  }),
-  password: z.string().min(8, "at least should have 8").max(20, "20 is max"),
-});
 
 class AuthController {
   async refreshTokenController(
@@ -26,55 +15,26 @@ class AuthController {
     const refreshToken = req.cookies.jwt;
 
     if (!refreshToken) {
-      return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
-          .response(res)
+      return AppError.new(errorKinds.invalidToken, "token is not present")
     }
 
     try {
-      const user = verifyWithRS256<z.infer<typeof ReturnUser>>(
-        refreshToken,
-        "REFRESH_TOKEN_PUBLIC_KEY"
-      );
-
-      if (!user)
-        return next(
-          AppError.new(
-            errorKinds.invalidToken,
-            "invalid refresh Token"
-          )
-        );
-
-      const foundUser = await prisma.user.findUnique({
-        where: {
-          id: user.id,
-        },
-        include: {
-          role: true,
-        },
-      });
-
-      const tokenUser = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        roleId: foundUser.roleId,
-        role_name: foundUser.role.name,
-      };
-
-      const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
-        expiresIn: "1d",
-      });
-      return res.status(200).json({ accessToken });
+      const {accessToken, user} = await service.generateAccessToken(refreshToken);
+      return res.status(200).json({ accessToken, user });
       
     } catch (e) {
-      return AppError.new(errorKinds.invalidToken, "invalid refresh Token")
-          .response(res)
+      if(e instanceof AppError){
+        return e.response(res)
+      }else{
+        return AppError.new(errorKinds.invalidToken, "internal Server Error")
+            .response(res)
+      }
     }
   }
 
   async register(req: Request, res: Response, next: NextFunction) {
     //validation
-    const cleanData = loginCredentialSchema.safeParse(req.body);
+    const cleanData = RegisterCredentialSchema.safeParse(req.body);
     if (!cleanData.success) {
       return AppError.new(
           errorKinds.validationFailed, 
@@ -85,12 +45,12 @@ class AuthController {
     }
 
     try {
-      const { accessToken, refreshToken } = await service.register(
+      const { accessToken, refreshToken, user } = await service.register(
         cleanData.data
       );
       //set Cookies
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-      return res.status(200).json({ accessToken }).end();
+      return res.status(200).json({ accessToken, user }).end();
 
     } catch (e) {
       if(e instanceof AppError){
@@ -106,7 +66,7 @@ class AuthController {
   }
 
   async login(req: Request, res: Response, next: NextFunction){
-    const cleanData = loginCredentialSchema.safeParse(req.body);
+    const cleanData = LoginCredentialSchema.safeParse(req.body);
     if(!cleanData.success) return AppError.new(
               errorKinds.validationFailed, 
               "validation Failed",
@@ -114,9 +74,9 @@ class AuthController {
               ).response(res)
 
     try{
-      const {accessToken, refreshToken} = await service.login(cleanData.data);
+      const {accessToken, refreshToken, user} = await service.login(cleanData.data);
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-      return res.status(200).json({ accessToken }).end();
+      return res.status(200).json({ accessToken, user }).end();
 
     }catch(e){
       //error handling
@@ -137,6 +97,12 @@ class AuthController {
   ){
     res.clearCookie("jwt")
     res.status(204).json({message : "logout success"}).end()
+  }
+
+  test(req: Request, res: Response, next: NextFunction){
+    // service.testService();
+
+    res.sendStatus(200);
   }
 }
 
