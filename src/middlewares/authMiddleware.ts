@@ -37,7 +37,11 @@ const authMiddleWare = async (
                 id : userFromToken.id
             },
             include : {
-                role : true
+                role : {
+                    include : {
+                        permissions : true
+                    }
+                }
             }
         });
 
@@ -50,11 +54,10 @@ const authMiddleWare = async (
             email : user.email,
             roleId : user.role.role_id,
             role_name : user.role.role_name,
-            permission : user.role.permission,
+            permission : user.role.permissions,
         }
         
     }catch(e){
-        console.log(e)
         if(e instanceof AppError){
             return e.response(res)
         }else{

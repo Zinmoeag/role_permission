@@ -3,6 +3,7 @@ import { z } from "zod";
 import AppError, { errorKinds } from "../utils/AppError";
 import OauthService, { getGoogleOauthToken, getGoogleUser } from "../service/oauthService";
 import { ReturnToken } from "../types/authType";
+import qs from "qs";
 
 const oauthService = new OauthService();
 
@@ -19,10 +20,7 @@ class OauthController {
     googleOauth = async (req: Request, res: Response, next: NextFunction) => {
 
         const code = req.query.code as string;
-
         const pathUrl = (req.query.state as string) || "/";
-
-        console.log(pathUrl);
 
         if(!code){
             return AppError.new(errorKinds.badRequest, "code is required").response(res);
@@ -32,7 +30,11 @@ class OauthController {
             const {accessToken, refreshToken} : ReturnToken = await oauthService.oauthHandler("GOOGLE", code);
 
             res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-            res.json({accessToken}).end(); 
+            // res.json({accessToken}).end(); 
+            const encodedToken = encodeURIComponent(accessToken);
+            const params = qs.stringify({ token: encodedToken });
+
+            res.redirect(`${pathUrl}?${params}`);
 
         }catch(err){
             if(err instanceof AppError){

@@ -2,11 +2,16 @@ import { NextFunction, Request, Response } from "express";import { z } from "zod
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
 import {LoginCredentialSchema , RegisterCredentialSchema} from "../schema/authSchema";
-
+import { AuthRequest } from "../middlewares/authMiddleware";
 
 const service = new AuthService();
 
 class AuthController {
+  async getAuthUser(req: Request, res: Response, next: NextFunction){
+    const authReq = req as AuthRequest;
+    const user = authReq.user;
+    return res.status(200).json({user}).end();
+  }
   async refreshTokenController(
     req: Request,
     res: Response,
@@ -15,12 +20,13 @@ class AuthController {
     const refreshToken = req.cookies.jwt;
 
     if (!refreshToken) {
-      return AppError.new(errorKinds.invalidToken, "token is not present")
+      return AppError.new(errorKinds.invalidToken, "token is not present").response(res);
     }
 
     try {
       const {accessToken, user} = await service.generateAccessToken(refreshToken);
-      return res.status(200).json({ accessToken, user });
+      res.cookie("auth_access", accessToken, { secure: true });
+      return res.status(200).json({ accessToken, user }).end();
       
     } catch (e) {
       if(e instanceof AppError){
@@ -50,6 +56,8 @@ class AuthController {
       );
       //set Cookies
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
+      res.cookie("auth_access", accessToken, { secure: true });
+
       return res.status(200).json({ accessToken, user }).end();
 
     } catch (e) {
@@ -76,6 +84,7 @@ class AuthController {
     try{
       const {accessToken, refreshToken, user} = await service.login(cleanData.data);
       res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
+      res.cookie("auth_access", accessToken, { secure: true });
       return res.status(200).json({ accessToken, user }).end();
 
     }catch(e){
