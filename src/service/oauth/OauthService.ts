@@ -4,6 +4,8 @@ import { ReturnUser } from "../../types/user";
 import Service from "../service";
 import {z} from "zod";
 import { signWithRS256 } from "../../helper";
+import { OauthUser } from "../../types/oauthType";
+import { ReturnToken } from "../../types/authType";
 
 class OauthService extends Service {
     _exclude = [
@@ -16,12 +18,12 @@ class OauthService extends Service {
         this.OauthServiceInterface = OauthServiceInterface
     }
 
-    async getOauthUser(code : string) {
+    async getOauthUser(code : string) : Promise<OauthUser> {
         const {access_token, id_token} = await this.OauthServiceInterface.getOauthToken(code);
         return await this.OauthServiceInterface.getOauthUser({access_token, id_token});
     }
 
-    async store(user : any) : Promise<z.infer<typeof ReturnUser>>{
+    async store(user : OauthUser) : Promise<z.infer<typeof ReturnUser>>{
         const newUser = await prisma.user.upsert({
             where : {
               email : user.email
@@ -43,17 +45,22 @@ class OauthService extends Service {
         return this.getUser(newUser);
     }
 
-    async login(code : string){
+    async login(code : string) : Promise<ReturnToken> {
 
-        const OauthUser = await this.getOauthUser(code);
-        //store to data base
+        const OauthUser : OauthUser= await this.getOauthUser(code);
+        //store to database
         const user = await this.store(OauthUser);
 
         const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : this.acesssTokenExp});
         const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: this.refreshTokenExp});
-
         return {accessToken, refreshToken};
     }
+
+    // async test(code :string){
+    //     const data : any = await this.OauthServiceInterface.getOauthToken(code);
+
+    //     const user : OauthUser = await this.OauthServiceInterface.getOauthUser({access_token : data.access_token, id_token : "dd"});
+    // }
 }
 
 export default OauthService;

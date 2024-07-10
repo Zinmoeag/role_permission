@@ -6,7 +6,9 @@ import { ReturnToken } from "../types/authType";
 //new OauthService
 import OauthService from "../service/oauth/OauthService";
 import GoogleOauthService from "../service/oauth/GogleOauthService";
+import GitHubOauthService from "../service/oauth/GitHubOauthService";
 
+//test
 
 const loginCredentialSchema = z.object({
   name: z.string(),
@@ -40,6 +42,16 @@ class OauthController {
             }
             return AppError.new(errorKinds.internalServerError, "internal server error").response(res);
         }
+    }
+
+    githubOauth = async (req : Request, res : Response, next : NextFunction) => {
+        const code = req.query.code as string;
+        const pathUrl = (req.query.state as string) || "/";
+
+        const oauthService = new OauthService(new GitHubOauthService());
+        const test = oauthService.login(code);
+
+        res.redirect(pathUrl + "/dd");
     }
 }
 

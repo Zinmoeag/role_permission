@@ -17,3 +17,30 @@ export interface GoogleUserResult {
     picture: string;
     locale: string;
 }
+
+//github
+export type GitHubOauthToken = {
+    access_token: string;
+    scope : "user:email";
+};
+
+export type GitHubUserEmail = {
+    email: string;
+    primary : boolean;
+    verified : boolean;
+    visibility : string;
+}
+
+export interface GitHubUser {
+    login: string;
+    avatar_url: string;
+    name: string;
+    email: string;
+}
+
+
+export type OauthUser = {
+    email: string,
+    name: string,
+    photo: string,
+}

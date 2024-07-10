@@ -8,7 +8,7 @@ interface OauthServiceInterface{
     } : {
         access_token : string,
         id_token : string
-    }): Promise<GoogleUserResult>;
+    }): Promise<any>;
 }
 
 export default OauthServiceInterface;
