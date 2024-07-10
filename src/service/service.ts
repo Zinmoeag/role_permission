@@ -5,6 +5,9 @@ import { ReturnUser } from "../types/user";
 export default abstract class Service {
     abstract _exclude : string[];
 
+    acesssTokenExp = "20s";
+    refreshTokenExp = "1d";
+
     exclude(data : Object){
         const filteredEntries = exclude(this._exclude, data);
         // console.log("filter",filteredEntries)
