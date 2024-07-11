@@ -1,14 +1,9 @@
-import { GoogleOauthToken, GoogleUserResult } from "../../../types/oauthType";
+import { OauthToken } from "../../../types/oauthType";
+import { OauthUser } from "../../../types/oauthType";
 
-interface OauthServiceInterface{
-    getOauthToken(code: string):  Promise<GoogleOauthToken>;
-    getOauthUser({
-        access_token,
-        id_token
-    } : {
-        access_token : string,
-        id_token : string
-    }): Promise<any>;
+interface OauthServiceInterface<T extends OauthToken>{
+    getOauthToken(code: string):  Promise<T>;
+    getOauthUser(token : T): Promise<OauthUser>;
 }
 
 export default OauthServiceInterface;

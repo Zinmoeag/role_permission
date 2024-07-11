@@ -4,23 +4,25 @@ import { ReturnUser } from "../../types/user";
 import Service from "../service";
 import {z} from "zod";
 import { signWithRS256 } from "../../helper";
-import { OauthUser } from "../../types/oauthType";
+import { OauthToken, OauthUser } from "../../types/oauthType";
 import { ReturnToken } from "../../types/authType";
+import AppError from "../../utils/AppError";
+import { errorKinds } from "../../utils/AppError";
 
-class OauthService extends Service {
+class OauthService<T extends OauthToken> extends Service {
     _exclude = [
         "password"
     ];
 
-    private OauthServiceInterface : OauthServiceInterface
-    constructor(OauthServiceInterface : OauthServiceInterface) {
+    private OauthServiceInterface : OauthServiceInterface<T>
+    constructor(OauthServiceInterface : OauthServiceInterface<T>) {
         super();
         this.OauthServiceInterface = OauthServiceInterface
     }
 
     async getOauthUser(code : string) : Promise<OauthUser> {
-        const {access_token, id_token} = await this.OauthServiceInterface.getOauthToken(code);
-        return await this.OauthServiceInterface.getOauthUser({access_token, id_token});
+        const tokens : T = await this.OauthServiceInterface.getOauthToken(code);
+        return await this.OauthServiceInterface.getOauthUser(tokens);
     }
 
     async store(user : OauthUser) : Promise<z.infer<typeof ReturnUser>>{
@@ -47,20 +49,23 @@ class OauthService extends Service {
 
     async login(code : string) : Promise<ReturnToken> {
 
-        const OauthUser : OauthUser= await this.getOauthUser(code);
-        //store to database
-        const user = await this.store(OauthUser);
-
-        const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : this.acesssTokenExp});
-        const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: this.refreshTokenExp});
-        return {accessToken, refreshToken};
+        try{
+          const OauthUser : OauthUser= await this.getOauthUser(code);
+          //store to database
+          const user = await this.store(OauthUser);
+  
+          const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : this.acesssTokenExp});
+          const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: this.refreshTokenExp});
+          return {accessToken, refreshToken};
+        }catch(err){
+          if(err instanceof AppError){
+            //handling error from service
+            throw err
+          }
+          throw AppError.new(errorKinds.internalServerError, "internal server error during login");
+        }
     }
 
-    // async test(code :string){
-    //     const data : any = await this.OauthServiceInterface.getOauthToken(code);
-
-    //     const user : OauthUser = await this.OauthServiceInterface.getOauthUser({access_token : data.access_token, id_token : "dd"});
-    // }
 }
 
 export default OauthService;

@@ -5,10 +5,11 @@ import OauthServiceInterface from "./interfaces/OauthServiceInterface";
 import axios from "axios";
 import { GitHubOauthToken, GitHubUser, GitHubUserEmail } from "../../types/oauthType";
 import AppError, { errorKinds } from "../../utils/AppError";
+import { ReturnToken } from "../../types/authType";
 
-class GitHubOauthService implements OauthServiceInterface {
+class GitHubOauthService implements OauthServiceInterface<GitHubOauthToken> {
 
-    public async getOauthToken(code: string): Promise<any> {
+    public async getOauthToken(code: string): Promise<GitHubOauthToken> {
         const rootUrl = "https://github.com/login/oauth/access_token";
 
         const options = {
@@ -19,17 +20,24 @@ class GitHubOauthService implements OauthServiceInterface {
 
         const queryString = qs.stringify(options);
 
-        const {data} = await axios.post(`${rootUrl}?${queryString}`, {
-            headers : {
-                "Content-Type" : "application/x-www-form-urlencoded"
-            } 
-        });
+        try{
+            const {data} = await axios.post(`${rootUrl}?${queryString}`, {
+                headers : {
+                    "Content-Type" : "application/x-www-form-urlencoded"
+                } 
+            });
+            const decodedData = qs.parse(data);
+            return {
+                access_token : decodedData.access_token as string,
+                scope : decodedData.scope as string
+            }
+        }catch(err){
+            throw AppError.new(errorKinds.badRequest, "unauthorized to github");
+        }
 
-        const decodedData = qs.parse(data);
 
-        return decodedData;
     }
-    public async getOauthUser({ access_token }: { access_token: string}) : Promise<OauthUser> {
+    public async getOauthUser({ access_token }: GitHubOauthToken) : Promise<OauthUser> {
         const rootUrl = "https://api.github.com/user";
 
         const emailUrl = "https://api.github.com/user/emails";
@@ -61,7 +69,6 @@ class GitHubOauthService implements OauthServiceInterface {
             }
 
         }catch(err){
-            // console.log(err)
             throw AppError.new(errorKinds.internalServerError, "no github user");
         }
 

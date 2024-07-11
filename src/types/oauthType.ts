@@ -1,4 +1,4 @@
-export interface GoogleOauthToken {
+export type GoogleOauthToken = {
     access_token: string;
     id_token: string;
     expires_in: number;
@@ -7,7 +7,7 @@ export interface GoogleOauthToken {
     scope: string;
 }
 
-export interface GoogleUserResult {
+export type GoogleUserResult=  {
     id: string;
     email: string;
     verified_email: boolean;
@@ -21,7 +21,7 @@ export interface GoogleUserResult {
 //github
 export type GitHubOauthToken = {
     access_token: string;
-    scope : "user:email";
+    scope : string;
 };
 
 export type GitHubUserEmail = {
@@ -44,3 +44,7 @@ export type OauthUser = {
     name: string,
     photo: string,
 }
+
+
+
+export type OauthToken = GoogleOauthToken | GitHubOauthToken;

@@ -48,10 +48,19 @@ class OauthController {
         const code = req.query.code as string;
         const pathUrl = (req.query.state as string) || "/";
 
-        const oauthService = new OauthService(new GitHubOauthService());
-        const test = oauthService.login(code);
+        try{
+            const oauthService = new OauthService(new GitHubOauthService());
+            const {accessToken, refreshToken} : ReturnToken = await oauthService.login(code);
+            res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
+            res.cookie("auth_access", accessToken, { secure: true });
+            res.redirect(pathUrl);
+        }catch(err){
+            if(err instanceof AppError){
+                return err.response(res);
+            }
+            return AppError.new(errorKinds.internalServerError, "internal server error").response(res);
+        }
 
-        res.redirect(pathUrl + "/dd");
     }
 }
 
