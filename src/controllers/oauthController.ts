@@ -1,11 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import AppError, { errorKinds } from "../utils/AppError";
-import OauthService, { getGoogleOauthToken, getGoogleUser } from "../service/oauthService";
 import { ReturnToken } from "../types/authType";
-import qs from "qs";
 
-const oauthService = new OauthService();
+//new OauthService
+import OauthService from "../service/oauth/OauthService";
+import GoogleOauthService from "../service/oauth/GogleOauthService";
+import GitHubOauthService from "../service/oauth/GitHubOauthService";
+
+//test
 
 const loginCredentialSchema = z.object({
   name: z.string(),
@@ -27,14 +30,11 @@ class OauthController {
         }
 
         try{
-            const {accessToken, refreshToken} : ReturnToken = await oauthService.oauthHandler("GOOGLE", code);
-
+            const oauthService = new OauthService(new GoogleOauthService());
+            const {accessToken, refreshToken} : ReturnToken = await oauthService.login(code);
             res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-            // res.json({accessToken}).end(); 
-            const encodedToken = encodeURIComponent(accessToken);
-            const params = qs.stringify({ token: encodedToken });
-
-            res.redirect(`${pathUrl}?${params}`);
+            res.cookie("auth_access", accessToken, { secure: true });
+            res.redirect(`${pathUrl}`);
 
         }catch(err){
             if(err instanceof AppError){
@@ -42,6 +42,25 @@ class OauthController {
             }
             return AppError.new(errorKinds.internalServerError, "internal server error").response(res);
         }
+    }
+
+    githubOauth = async (req : Request, res : Response, next : NextFunction) => {
+        const code = req.query.code as string;
+        const pathUrl = (req.query.state as string) || "/";
+
+        try{
+            const oauthService = new OauthService(new GitHubOauthService());
+            const {accessToken, refreshToken} : ReturnToken = await oauthService.login(code);
+            res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
+            res.cookie("auth_access", accessToken, { secure: true });
+            res.redirect(pathUrl);
+        }catch(err){
+            if(err instanceof AppError){
+                return err.response(res);
+            }
+            return AppError.new(errorKinds.internalServerError, "internal server error").response(res);
+        }
+
     }
 }
 

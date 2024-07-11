@@ -12,6 +12,10 @@ const applicationConfig = {
     GOOGLE_CLIENT_SECRET : process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URL : process.env.GOOGLE_REDIRECT_URL,
 
+    GITHUB_CLIENT_ID : process.env.GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET : process.env.GITHUB_CLIENT_SECRET,
+    GITHUB_REDIRECT_URL : process.env.GITHUB_REDIRECT_URL,
+
 } as const;
 
 export type configType = typeof applicationConfig[keyof typeof applicationConfig]

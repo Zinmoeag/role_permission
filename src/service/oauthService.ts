@@ -112,7 +112,7 @@ export default class OauthService extends Service {
     }
   }
 
-  async oauthHandler (provider : Provider, code : string) : Promise<ReturnToken>{
+  async oauthHandler(provider : Provider, code : string) : Promise<ReturnToken>{
 
       try{
         const user = await this.getOauthUser(provider, code);
