@@ -6,9 +6,8 @@ import homeRouter from "./home";
 import authMiddleWare, { AuthRequest } from "../middlewares/authMiddleware";
 import CheckRoleMiddleware from "../middlewares/checkRoleMiddleware";
 import dashboardRouter from "./dashboard";
-import { getGoogleOauthToken } from "../service/oauthService";
-import oauthController from "../controllers/oauthController";
 import oauthRouter from "./oauth";
+import VerifyEmail from "../service/Email/VerfifyEmail";
 
 const router = Router();
 
@@ -18,11 +17,27 @@ router.use("/api/oauth", oauthRouter);
 router.use("/dashboard", authMiddleWare, CheckRoleMiddleware.isAdmin, dashboardRouter)
 router.use("/home", authMiddleWare, homeRouter);
 
-router.get("/test", (req : Request, res : Response, next : NextFunction) => {
-  // getGoogleOauthToken();
-  res.send("test route").status(200).end();
+router.get("/testing", async (req : Request, res : Response, next : NextFunction) => {
+  // res.send("test route").status(200).end();
+  try{
+    const email  = new VerifyEmail({
+      name : "zin",
+      to : "user@gmail.com",
+      from : "admin@gmail.com",
+      mailObj : {
+        url : "http://localhost:3000/verificationCode"
+      }
+    });
+
+    await email.send();    
+    res.sendStatus(200).end();
+  }catch(err){
+    console.log("error", err);
+    res.sendStatus(500).end();
+  }
 })
 
+// console.log(path.resolve(__dirname, "build", "index.html"));
 // not found route
 router.use((req: Request, res: Response, next: NextFunction) => {
   res.send("page not found").status(404).end();

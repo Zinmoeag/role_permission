@@ -1,12 +1,13 @@
 import { NextFunction, Request, Response } from "express";import { z } from "zod";
 import AuthService from "../service/authService";
 import AppError, { errorKinds } from "../utils/AppError";
-import {LoginCredentialSchema , RegisterCredentialSchema} from "../schema/authSchema";
+import {LoginCredentialSchema , RegisterCredentialSchema, VerfyEmailSchema} from "../schema/authSchema";
 import { AuthRequest } from "../middlewares/authMiddleware";
 
 const service = new AuthService();
 
 class AuthController {
+
   async getAuthUser(req: Request, res: Response, next: NextFunction){
     const authReq = req as AuthRequest;
     const user = authReq.user;
@@ -51,15 +52,11 @@ class AuthController {
     }
 
     try {
-      const { accessToken, refreshToken, user } = await service.register(
+      const {isSuccess} = await service.register(
         cleanData.data
       );
-      //set Cookies
-      res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-      res.cookie("auth_access", accessToken, { secure: true });
 
-      return res.status(200).json({ accessToken, user }).end();
-
+      return res.status(200).json({ isVerfyEmailSend :  isSuccess }).end();
     } catch (e) {
       if(e instanceof AppError){
         return e.response(res)
@@ -99,19 +96,31 @@ class AuthController {
     }
   }
 
+  async verifyAccount(req: Request, res: Response, next: NextFunction){
+    const cleanData = VerfyEmailSchema.safeParse(req.body);
+    if(!cleanData.success) return AppError.new(
+      errorKinds.validationFailed, 
+      "validation Failed",
+      cleanData.error.formErrors.fieldErrors
+      ).response(res)
+
+    try{  
+      const {verification_code} = cleanData.data;
+      await service.verifyAccount(verification_code);
+      res.sendStatus(200);
+    }catch(err){
+      return AppError.new(errorKinds.forbidden, "inivalid verification code").response(res)
+    }
+  }
+
   logout(
     req : Request,
     res : Response,
     next : NextFunction,
   ){
-    res.clearCookie("jwt")
+    res.clearCookie("jwt");
+    res.clearCookie("auth_access");
     res.status(204).json({message : "logout success"}).end()
-  }
-
-  test(req: Request, res: Response, next: NextFunction){
-    // service.testService();
-
-    res.sendStatus(200);
   }
 }
 
