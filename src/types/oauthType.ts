@@ -42,7 +42,7 @@ export interface GitHubUser {
 export type OauthUser = {
     email: string,
     name: string,
-    photo: string,
+    avatar: string | null,
 }
 
 

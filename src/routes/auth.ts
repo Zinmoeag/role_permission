@@ -14,7 +14,9 @@ authRouter.post("/logout", authController.logout);
 
 authRouter.post("/refreshToken", authController.refreshTokenController);
 
-authRouter.get("/test", authMiddleWare, authController.getAuthUser)
+authRouter.post("/verify_email", authController.verifyAccount)
+
+// authRouter.get("/test", authMiddleWare, authController.getAuthUser)
 
 export default authRouter;
 

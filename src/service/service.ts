@@ -1,6 +1,7 @@
 import { exclude } from "../helper"
 import {z} from "zod";
 import { ReturnUser } from "../types/user";
+import { getUser } from "../utils/auth";
 
 export default abstract class Service {
     abstract _exclude : string[];
@@ -10,18 +11,10 @@ export default abstract class Service {
 
     exclude(data : Object){
         const filteredEntries = exclude(this._exclude, data);
-        // console.log("filter",filteredEntries)
         return filteredEntries;
     }
 
-    getUser(rawUser : any) : z.infer<typeof ReturnUser>{
-        return {
-            id : rawUser.id,
-            name : rawUser.name,
-            email : rawUser.email,
-            roleId : rawUser.roleId,
-            role_name : rawUser.role.role_name,
-            permission : rawUser.role.permission,
-        }
+    getUser(rawUser : any) : z.infer<typeof ReturnUser>{   
+        return getUser(rawUser);
     }
 }

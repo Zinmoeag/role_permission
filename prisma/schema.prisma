@@ -11,33 +11,36 @@ datasource db {
 }
 
 model User {
-  id     String @id @default(uuid())
-  name   String
-  password String
-  email  String @unique
-  roleId Int    @default(1) 
-  role   Role   @relation(fields: [roleId], references: [role_id])
+  id               String  @id @default(uuid())
+  name             String
+  password         String
+  email            String  @unique
+  avatar           String?
+  roleId           Int     @default(1)
+  role             Role    @relation(fields: [roleId], references: [role_id])
+  verify           Boolean @default(false) 
+  verificationCode String? @unique
 }
 
 model Role {
-  id String @id @default(uuid())
-  role_id   Int    @unique
-  role_name String @unique
-  users      User[]
+  id          String           @id @default(uuid())
+  role_id     Int              @unique
+  role_name   String           @unique
+  users       User[]
   permissions RolePermission[]
 }
 
 model Permission {
-  id    String  @id  @default(uuid())
-  action  String
-  resource   String
-  roles RolePermission[]
+  id       String           @id @default(uuid())
+  action   String
+  resource String
+  roles    RolePermission[]
 }
 
 model RolePermission {
-  id String @id @default(uuid())
-  role_id Int  @unique
-  role Role @relation(fields: [role_id], references: [role_id])
-  permission_id String @default(uuid())
-  permission Permission @relation(fields: [permission_id], references: [id])
+  id            String     @id @default(uuid())
+  role_id       Int        @unique
+  role          Role       @relation(fields: [role_id], references: [role_id])
+  permission_id String     @default(uuid())
+  permission    Permission @relation(fields: [permission_id], references: [id])
 }

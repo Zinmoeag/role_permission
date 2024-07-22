@@ -6,6 +6,7 @@ import AppError, { errorKinds } from "../utils/AppError";
 import {z} from "zod";
 import { LoginCredentialSchema, RegisterCredentialSchema } from "../schema/authSchema";
 import { ReturnUser } from "../types/user";
+import Verification from "./Auth/Verification";
 
 
 const _saltRound = 10;
@@ -16,7 +17,13 @@ type ReturnToken = {
     user : z.infer<typeof ReturnUser>,
 }
 
+type Register = {
+  isVerfyEmailSend : boolean,
+}
+
 export default class AuthService extends Service {
+
+    private verification = new Verification();
 
     _exclude = [
         "password",
@@ -31,7 +38,11 @@ export default class AuthService extends Service {
         super()
     }
 
-    async register(data : z.infer<typeof RegisterCredentialSchema>) : Promise<ReturnToken>{
+    async verifyAccount(verificationCode : string){
+      await this.verification.VerifyAccount(verificationCode);
+    }
+
+    async register(data : z.infer<typeof RegisterCredentialSchema>) : Promise<any>{
 
         const isEmailUsed = await prisma.user.findFirst({
             where: {
@@ -50,32 +61,38 @@ export default class AuthService extends Service {
 
         const salt = bcrypt.genSaltSync(_saltRound);
         const hashedPassword = bcrypt.hashSync(data.password, salt);
-        //storing data
-        const rawUser  = await prisma.user.create({
+
+        const rawUser = await prisma.user.create({
             data : {
                 name : data.name,
                 email : data.email,
                 password : hashedPassword,
+                verify : false,
             },
             include : {
                 role : {
-                    include : {
-                        permissions : true
-                    }
+                  include : {
+                    permissions : {
+                      include : {
+                        permission : true
+                      }
+                    },
+                  }
                 }
-            }
-        })
-        
+              },
+            })
+
+        //storing data
         const user : z.infer<typeof ReturnUser> = this.getUser(rawUser);
 
-        const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : this.acesssTokenExp
-        });
-        const refreshToken = signWithRS256(user, 'REFRESH_TOKEN_PRIVATE_KEY', {
-            expiresIn : this.refreshTokenExp
-        });
+        try{
+        // verify account
+          await this.verification.request(rawUser);
+          return {isSuccess : true}
+        }catch(err){
+            throw new AppError(errorKinds.internalServerError, "verification failed");
+        }
         
-        return {accessToken, refreshToken, user};
     }
 
     async login(data : z.infer<typeof LoginCredentialSchema>) : Promise<ReturnToken>{
@@ -85,11 +102,15 @@ export default class AuthService extends Service {
             },
             include : {
                 role : {
-                    include : {
-                        permissions : true
-                    }
+                  include : {
+                    permissions : {
+                      include : {
+                        permission : true
+                      }
+                    },
+                  }
                 }
-            }
+              },
         })
     
         if(!foundUser) throw AppError.new(
@@ -134,13 +155,17 @@ export default class AuthService extends Service {
             where: {
               id: user.id,
             },
-            include: {
-              role: {
-               include : {
-                permissions : true
-               }
+            include : {
+                role : {
+                  include : {
+                    permissions : {
+                      include : {
+                        permission : true
+                      }
+                    },
+                  }
+                }
               },
-            },
           });
     
           const tokenUser = this.getUser(foundUser);

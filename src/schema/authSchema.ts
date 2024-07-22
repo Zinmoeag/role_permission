@@ -14,3 +14,7 @@ export const RegisterCredentialSchema = z.object({
     }),
     password: z.string().min(8, "at least should have 8").max(20, "20 is max"),
 });
+
+export const VerfyEmailSchema = z.object({
+  verification_code : z.string(),
+})

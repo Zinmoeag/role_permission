@@ -64,9 +64,10 @@ class GitHubOauthService implements OauthServiceInterface<GitHubOauthToken> {
 
             return {
                 name : data.name as string,
-                photo : data.avatar_url as string,
+                avatar : data.avatar_url as string,
                 email : primaryEmail as string,
             }
+
 
         }catch(err){
             throw AppError.new(errorKinds.internalServerError, "no github user");

@@ -1,5 +1,5 @@
 import OauthServiceInterface from "./interfaces/OauthServiceInterface"
-import { GitHubOauthToken, GoogleOauthToken, GoogleUserResult, OauthToken, OauthUser } from "../../types/oauthType";
+import { GoogleOauthToken, GoogleUserResult, OauthUser } from "../../types/oauthType";
 import AppError from "../../utils/AppError";
 import AppConfig from "../../config";
 import axios from "axios";
@@ -48,7 +48,7 @@ class GoogleOauthService implements OauthServiceInterface<GoogleOauthToken>{
         
             return {
                 name : data.name as string,
-                photo : data.picture as string,
+                avatar : data.picture as string,
                 email : data.email as string,
             }
         }catch(err){

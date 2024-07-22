@@ -1,4 +1,4 @@
-const applicationConfig = {
+export const applicationConfig = {
     appUrl : process.env.APP_URL,
     jwtSecretKey : process.env.JWT_SECRET_KEY,
 
@@ -15,6 +15,12 @@ const applicationConfig = {
     GITHUB_CLIENT_ID : process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET : process.env.GITHUB_CLIENT_SECRET,
     GITHUB_REDIRECT_URL : process.env.GITHUB_REDIRECT_URL,
+
+    EMAIL_USER : process.env.EMAIL_USER,
+    EMAIL_PASSWORD : process.env.EMAIL_PASSWORD,
+    EMAIL_SMTP_HOST  : process.env.EMAIL_SMTP_HOST,
+    EMAIL_SMTP_PORT : process.env.EMAIL_SMTP_PORT,
+    ADMIN_EMAIL_ADDRESS : process.env.ADMIN_EMAIL_ADDRESS,
 
 } as const;
 

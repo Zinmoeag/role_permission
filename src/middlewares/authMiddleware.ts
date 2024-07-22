@@ -1,9 +1,10 @@
 import { Response, Request, NextFunction } from "express";
-import { exclude, verifyWithRS256 } from "../helper";
+import { verifyWithRS256 } from "../helper";
 import AppError, { errorKinds } from "../utils/AppError";
 import prisma from "../../prisma/client";
 import { ReturnUser } from "../types/user";
 import {z} from "zod";
+import { getUser } from "../utils/auth";
 
 
 export interface AuthRequest extends Request {
@@ -39,7 +40,11 @@ const authMiddleWare = async (
             include : {
                 role : {
                     include : {
-                        permissions : true
+                        permissions : {
+                            include : {
+                                permission : true
+                            },
+                        }
                     }
                 }
             }
@@ -48,14 +53,7 @@ const authMiddleWare = async (
         if(!user) return AppError.new(errorKinds.notAuthorized, "token is not invalid").response(res);
 
         const authReq = req as AuthRequest;
-        authReq.user = {
-            id : user.id,
-            name : user.name,
-            email : user.email,
-            roleId : user.role.role_id,
-            role_name : user.role.role_name,
-            permission : user.role.permissions,
-        }
+        authReq.user = getUser(user);
         
     }catch(e){
         if(e instanceof AppError){

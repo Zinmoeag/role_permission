@@ -34,16 +34,22 @@ class OauthService<T extends OauthToken> extends Service {
             create : {
               name : user.name,
               email : user.email,
+              avatar : user?.avatar,
               password : ""
             },
             include : {
               role : {
                 include : {
-                  permissions : true,
+                  permissions : {
+                    include : {
+                      permission : true
+                    }
+                  },
                 }
               }
             },
         })
+
         return this.getUser(newUser);
     }
 
@@ -53,7 +59,7 @@ class OauthService<T extends OauthToken> extends Service {
           const OauthUser : OauthUser= await this.getOauthUser(code);
           //store to database
           const user = await this.store(OauthUser);
-  
+ 
           const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {expiresIn : this.acesssTokenExp});
           const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY", {expiresIn: this.refreshTokenExp});
           return {accessToken, refreshToken};
@@ -65,7 +71,6 @@ class OauthService<T extends OauthToken> extends Service {
           throw AppError.new(errorKinds.internalServerError, "internal server error during login");
         }
     }
-
 }
 
 export default OauthService;
