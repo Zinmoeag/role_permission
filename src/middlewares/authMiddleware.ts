@@ -6,7 +6,6 @@ import { ReturnUser } from "../types/user";
 import {z} from "zod";
 import { getUser } from "../utils/auth";
 
-
 export interface AuthRequest extends Request {
     user : z.infer<typeof ReturnUser>
 }
@@ -56,6 +55,7 @@ const authMiddleWare = async (
         authReq.user = getUser(user);
         
     }catch(e){
+        console.log(e)
         if(e instanceof AppError){
             return e.response(res)
         }else{

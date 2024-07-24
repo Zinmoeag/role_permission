@@ -19,7 +19,8 @@ export const errorKinds = {
     notAuthorized : "notAuthorized",
     alreadyExist : "alreadyExist",
     forbidden : "forbidden",
-    badRequest : "badRequest"
+    badRequest : "badRequest",
+    mailboxUnavailable : "mailboxUnavailable"
 } as const;
 
 export type errorKindsType = typeof errorKinds[keyof typeof errorKinds]
@@ -84,6 +85,9 @@ class AppError extends Error {
                 break;
             case errorKinds.badRequest : 
                 error_status = StatusCode.BadRequest
+                break;
+            case errorKinds.mailboxUnavailable : 
+                error_status = StatusCode.MailboxUnavailable
                 break;
         }
         return error_status;

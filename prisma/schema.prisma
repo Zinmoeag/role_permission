@@ -11,15 +11,16 @@ datasource db {
 }
 
 model User {
-  id               String  @id @default(uuid())
-  name             String
-  password         String
-  email            String  @unique
-  avatar           String?
-  roleId           Int     @default(1)
-  role             Role    @relation(fields: [roleId], references: [role_id])
-  verify           Boolean @default(false) 
-  verificationCode String? @unique
+  id                       String    @id @default(uuid())
+  name                     String
+  password                 String
+  email                    String    @unique
+  avatar                   String?
+  roleId                   Int       @default(1)
+  role                     Role      @relation(fields: [roleId], references: [role_id])
+  verify                   Boolean   @default(false)
+  verificationCode         String?   @unique
+  verificationCode_expried DateTime? 
 }
 
 model Role {

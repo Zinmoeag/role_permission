@@ -13,7 +13,6 @@ const corsOptions = {
     credentials: true,
 }
 
-
 const app = express();
 //template engine
 app.set('view engine', 'pug');

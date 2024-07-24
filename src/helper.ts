@@ -20,6 +20,7 @@ export const signWithRS256 = (payload : z.infer<typeof ReturnUser>, key : "ACCES
 }
 
 export const verifyWithRS256 = <T>(token : string, key : "ACCESS_TOKEN_PUBLIC_KEY" | "REFRESH_TOKEN_PUBLIC_KEY") : T | null => {
+
     try{
         const publcKey = Buffer.from(AppConfig.getConfig(key), "base64").toString("ascii");
         
@@ -44,6 +45,12 @@ export const exclude = (excludeList: string[], data : Object) => {
     )
 
     return Object.fromEntries(filteredEntries)
+}
+
+
+export const isExpired = (date : number, expried_time : number) => {
+    const now = Date.now();
+    return now - date >= expried_time;
 }
 
 // exlude with nested object testing ------------------------------------

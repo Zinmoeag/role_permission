@@ -1,8 +1,10 @@
 import { NextFunction, Request, Response } from "express";import { z } from "zod";
 import AuthService from "../service/authService";
-import AppError, { errorKinds } from "../utils/AppError";
+import AppError, { errorKinds, errorKindsType } from "../utils/AppError";
 import {LoginCredentialSchema , RegisterCredentialSchema, VerfyEmailSchema} from "../schema/authSchema";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import { LoginOrRequestVerfy, LoginResponse, RequestVerifyEmail } from "../types/authType";
+import { Result, returnStates } from "../types";
 
 const service = new AuthService();
 
@@ -13,6 +15,7 @@ class AuthController {
     const user = authReq.user;
     return res.status(200).json({user}).end();
   }
+  
   async refreshTokenController(
     req: Request,
     res: Response,
@@ -25,9 +28,9 @@ class AuthController {
     }
 
     try {
-      const {accessToken, user} = await service.generateAccessToken(refreshToken);
-      res.cookie("auth_access", accessToken, { secure: true });
-      return res.status(200).json({ accessToken, user }).end();
+      const {access_token, user} = await service.generateAccessToken(refreshToken);
+      res.cookie("auth_access", access_token, { secure: true });
+      return res.status(200).json({ access_token, user }).end();
       
     } catch (e) {
       if(e instanceof AppError){
@@ -72,18 +75,33 @@ class AuthController {
 
   async login(req: Request, res: Response, next: NextFunction){
     const cleanData = LoginCredentialSchema.safeParse(req.body);
-    if(!cleanData.success) return AppError.new(
-              errorKinds.validationFailed, 
-              "validation Failed",
-              cleanData.error.formErrors.fieldErrors
-              ).response(res)
-
+    if(!cleanData.success) 
+      return AppError.new(
+                errorKinds.validationFailed, 
+                "validation Failed",
+                cleanData.error.formErrors.fieldErrors
+              ).response(res);
+  
     try{
-      const {accessToken, refreshToken, user} = await service.login(cleanData.data);
-      res.cookie("jwt", refreshToken, { httpOnly: true, secure: true });
-      res.cookie("auth_access", accessToken, { secure: true });
-      return res.status(200).json({ accessToken, user }).end();
+      const account : LoginResponse | RequestVerifyEmail = await service.loginOrReqVerify(cleanData.data);
 
+      if(account.type === LoginOrRequestVerfy.LOGIN_RESPONSE){
+
+        // if account verified do login
+        const {access_token, refresh_token, user} = account;
+        res.cookie("jwt", refresh_token, { httpOnly: true, secure: true });
+        res.cookie("auth_access", access_token, { secure: true });
+        
+        return res.status(200).json({ auth_access : access_token, user }).end();
+
+      }else{
+        console.log("verify");
+        const {is_verfiy_email_sent} = account;
+        //if account is not verified do verify process
+        res.status(200).json({
+          ...account
+        }).end();
+      }
     }catch(e){
       //error handling
       if(e instanceof AppError){
@@ -106,9 +124,13 @@ class AuthController {
 
     try{  
       const {verification_code} = cleanData.data;
-      await service.verifyAccount(verification_code);
+      const verification = await service.verifyAccount(verification_code);
+  
       res.sendStatus(200);
     }catch(err){
+      if(err instanceof AppError){
+        return err.response(res);
+      }
       return AppError.new(errorKinds.forbidden, "inivalid verification code").response(res)
     }
   }

@@ -7,18 +7,27 @@ import {z} from "zod";
 import { LoginCredentialSchema, RegisterCredentialSchema } from "../schema/authSchema";
 import { ReturnUser } from "../types/user";
 import Verification from "./Auth/Verification";
+import { LoginOrRequestVerfy, LoginOrRequestVerifyResponse, LoginResponse, RequestVerifyEmail } from "../types/authType";
+import { Result } from "../types";
 
 
 const _saltRound = 10;
 
 type ReturnToken = {
-    accessToken : string,
-    refreshToken : string,
-    user : z.infer<typeof ReturnUser>,
+    access_token : string,
+    refresh_Token : string,
+    user? : z.infer<typeof ReturnUser>,
 }
 
+type VerfifyEmail = {
+    verify : false,
+    isVerifiedMessageSend : boolean,
+}
+
+type ReturnLogin = ReturnToken | VerfifyEmail
+
 type Register = {
-  isVerfyEmailSend : boolean,
+  isVerfyEmailSent : boolean,
 }
 
 export default class AuthService extends Service {
@@ -38,12 +47,48 @@ export default class AuthService extends Service {
         super()
     }
 
-    async verifyAccount(verificationCode : string){
-      await this.verification.VerifyAccount(verificationCode);
+    async verifyAccount(verificationCode : string) {
+      return await this.verification.VerifyAccount(verificationCode);
+    }
+
+    async checkUserCredential(data : z.infer<typeof LoginCredentialSchema>){
+      const foundUser = await prisma.user.findFirst({
+        where : {
+            email : data.email,
+        },
+        include : {
+            role : {
+              include : {
+                permissions : {
+                  include : {
+                    permission : true
+                  }
+                },
+              }
+            }
+          },
+      })
+
+      if(!foundUser) throw AppError.new(
+          errorKinds.invalidCredential, 
+          "invalid credential",
+          {
+              email : ["invalid email"],
+          }
+      )
+
+      const isPasswordMatch = await bcrypt.compare(data.password, foundUser.password);
+      if(!isPasswordMatch) throw AppError.new(
+          errorKinds.invalidCredential, 
+          "invalid credential",
+          {
+              password : ["invalid password"],
+          }
+      )
+      return foundUser;
     }
 
     async register(data : z.infer<typeof RegisterCredentialSchema>) : Promise<any>{
-
         const isEmailUsed = await prisma.user.findFirst({
             where: {
                 email: data.email,
@@ -90,57 +135,54 @@ export default class AuthService extends Service {
           await this.verification.request(rawUser);
           return {isSuccess : true}
         }catch(err){
-            throw new AppError(errorKinds.internalServerError, "verification failed");
+          throw new AppError(errorKinds.internalServerError, "verification failed");
         }
         
     }
+      
+    async login(user : z.infer<typeof ReturnUser>) : Promise<ReturnToken>{
+        const access_token = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
+        expiresIn : this.acesssTokenExp
+      });
 
-    async login(data : z.infer<typeof LoginCredentialSchema>) : Promise<ReturnToken>{
-        const foundUser = await prisma.user.findFirst({
-            where : {
-                email : data.email,
-            },
-            include : {
-                role : {
-                  include : {
-                    permissions : {
-                      include : {
-                        permission : true
-                      }
-                    },
-                  }
-                }
-              },
-        })
-    
-        if(!foundUser) throw AppError.new(
-            errorKinds.invalidCredential, 
-            "invalid credential",
-            {
-                email : ["invalid email"],
+      const refresh_Token = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY",{
+          expiresIn : this.refreshTokenExp
+      })
+
+      return {
+        access_token, refresh_Token
+      }
+    }
+
+    async loginOrReqVerify(data : z.infer<typeof LoginCredentialSchema>) : Promise<LoginOrRequestVerifyResponse>{
+        try{
+          const foundUser = await this.checkUserCredential(data);
+          if(foundUser.verify === false){
+            await this.verification.request(foundUser);
+            return {
+              type : LoginOrRequestVerfy.REQUEST_VERFIFY_RESPONSE,
+              is_verfiy_email_sent : true,
             }
-        )
-
-        const isPasswordMatch = await bcrypt.compare(data.password, foundUser.password);
-        if(!isPasswordMatch) throw AppError.new(
-            errorKinds.invalidCredential, 
-            "invalid credential",
-            {
-                password : ["invalid password"],
-            }
-        )   
-        
-        const user: z.infer<typeof ReturnUser> = this.getUser(foundUser)
-
-        const accessToken = signWithRS256(user, "ACCESS_TOKEN_PRIVATE_KEY", {
-            expiresIn : this.acesssTokenExp
-        });
-
-        const refreshToken = signWithRS256(user, "REFRESH_TOKEN_PRIVATE_KEY",{
-            expiresIn : this.refreshTokenExp
-        })
-
-        return {accessToken, refreshToken, user};
+          }
+  
+          // login process
+          const user: z.infer<typeof ReturnUser> = this.getUser(foundUser);
+          const {access_token, refresh_Token} = await this.login(user);
+  
+          return {
+            type : LoginOrRequestVerfy.LOGIN_RESPONSE,
+            is_auth : true,
+            access_token,
+            refresh_token : refresh_Token,
+            user
+          }
+        }catch(err){
+          if(err instanceof AppError){
+            throw err
+          }else{
+            throw AppError.new(errorKinds.internalServerError, "Login process failed")
+          }
+        }
     }
 
     async generateAccessToken(refreshToken : string) : Promise<ReturnToken>{
@@ -169,14 +211,14 @@ export default class AuthService extends Service {
           });
     
           const tokenUser = this.getUser(foundUser);
-          const accessToken = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
+          const access_token = signWithRS256(tokenUser, "ACCESS_TOKEN_PRIVATE_KEY", {
             expiresIn: this.acesssTokenExp,
           });
 
           return {
-            accessToken, 
             user : tokenUser,
-            refreshToken,
+            access_token, 
+            refresh_Token : refreshToken,
           };
     }
 

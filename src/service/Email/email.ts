@@ -3,6 +3,7 @@ import AppConfig from "../../config";
 import pug from 'pug' 
 import {convert} from "html-to-text";
 import AppError, { errorKinds } from "../../utils/AppError";
+import { Result, returnStates } from "../../types";
 
 abstract class Email<T extends object>{
 
@@ -36,7 +37,7 @@ abstract class Email<T extends object>{
           })
     }
 
-    public async send() {
+    public async send() : Promise<Result<any, any>> {
       const html = pug.renderFile(this.viewPath + this.viewFileName + `.pug`, this.mailObject);
 
       try{
@@ -50,10 +51,22 @@ abstract class Email<T extends object>{
     
         // Send email
         const info = await this.newTransport().sendMail(mailOptions);
-        console.log(nodemailer.getTestMessageUrl(info));
+        console.log(nodemailer.getTestMessageUrl(info))
+
+        return {
+          state : returnStates.SUCCESS,
+          payload : {
+            mainInfo : info
+          }
+        }
 
       }catch(err){
-        throw AppError.new(errorKinds.internalServerError, "mail sending failed");
+        return {
+          state : "FAILED",
+          errorKind : errorKinds.mailboxUnavailable,
+          message : "Mail box Available",
+          errors : null
+        };
       }
       // Create mailOptions
     }

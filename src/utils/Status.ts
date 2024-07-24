@@ -27,13 +27,14 @@ export const StatusCode = {
     UnsupportedMediaType: 415, // Unsupported Media Type
     UnprocessableEntity: 422, // Unprocessable Entity
     TooManyRequests: 429, // Too Many Requests
-  
+    
     InternalServerError: 500, // Internal Server Error
     NotImplemented: 501, // Not Implemented
     BadGateway: 502, // Bad Gateway
     ServiceUnavailable: 503, // Service Unavailable
     GatewayTimeout: 504, // Gateway Timeout
     InsufficientStorage: 507, // Insufficient Storage
+    MailboxUnavailable : 550, // mailbox available
   } as const;
   export type StatusCode = typeof StatusCode[keyof typeof StatusCode];
   

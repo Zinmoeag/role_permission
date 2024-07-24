@@ -11,6 +11,10 @@ import VerifyEmail from "../service/Email/VerfifyEmail";
 
 const router = Router();
 
+router.get("/healthChecker", (req : Request , res : Response, next : NextFunction) => {
+  res.sendStatus(200).end();
+})
+
 router.use(authRouter);
 router.use("/user", authMiddleWare, userRouters);
 router.use("/api/oauth", oauthRouter);
