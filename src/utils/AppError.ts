@@ -2,7 +2,7 @@ import { StatusCode } from "./Status";
 import { Response } from "express";
 
 type payload = {
-    [key : string] : string[]
+    [key in string | number | symbol] : string[]
 }
 
 type errorPayload<T extends payload> = {
@@ -34,7 +34,7 @@ class AppError extends Error {
     constructor(
         public error : errorKindsType, 
         public message : string, 
-        public payload? : payload,
+        public payload? : payload | {},
     ) {
         super();
     }
@@ -42,14 +42,14 @@ class AppError extends Error {
     static new(
         error : errorKindsType = errorKinds.internalServerError,
         message : string = "internal Server Error", 
-        payload? : payload 
+        payload? : payload
     ){ 
         return payload 
             ? new AppError(error, message, payload)
             : new AppError(error, message)
     }
 
-    errorPayload <T extends payload>(payload? : T) : errorPayload<T | {}> {
+    errorPayload(payload? : payload) : errorPayload<payload | {}> {
         return {
             message : this.message,
             errors : payload ? payload : {}
@@ -96,7 +96,6 @@ class AppError extends Error {
     response(res : Response){
 
         const error_status = this.getStatus();
-
         return res.status(error_status)
             .json(this.errorPayload(this.payload)).end();
     }

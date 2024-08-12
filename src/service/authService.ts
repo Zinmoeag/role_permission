@@ -8,7 +8,6 @@ import { LoginCredentialSchema, RegisterCredentialSchema } from "../schema/authS
 import { ReturnUser } from "../types/user";
 import Verification from "./Auth/Verification";
 import { LoginOrRequestVerfy, LoginOrRequestVerifyResponse, LoginResponse, RequestVerifyEmail } from "../types/authType";
-import { Result } from "../types";
 
 
 const _saltRound = 10;
@@ -40,7 +39,7 @@ export default class AuthService extends Service {
         "permission.id"
     ];
 
-    acesssTokenExp = "20s";
+    acesssTokenExp = "1d";
     refreshTokenExp = "1d";
 
     constructor(){

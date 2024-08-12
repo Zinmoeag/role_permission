@@ -11,16 +11,17 @@ datasource db {
 }
 
 model User {
-  id                       String    @id @default(uuid())
+  id                       String     @id @default(uuid())
   name                     String
   password                 String
-  email                    String    @unique
+  email                    String     @unique
   avatar                   String?
-  roleId                   Int       @default(1)
-  role                     Role      @relation(fields: [roleId], references: [role_id])
-  verify                   Boolean   @default(false)
-  verificationCode         String?   @unique
-  verificationCode_expried DateTime? 
+  roleId                   Int        @default(1)
+  role                     Role       @relation(fields: [roleId], references: [role_id])
+  verify                   Boolean    @default(false)
+  verificationCode         String?    @unique
+  verificationCode_expried DateTime?
+  rooms                 RoomUser[]
 }
 
 model Role {
@@ -29,6 +30,7 @@ model Role {
   role_name   String           @unique
   users       User[]
   permissions RolePermission[]
+  room        RoomUser[]
 }
 
 model Permission {
@@ -44,4 +46,25 @@ model RolePermission {
   role          Role       @relation(fields: [role_id], references: [role_id])
   permission_id String     @default(uuid())
   permission    Permission @relation(fields: [permission_id], references: [id])
+}
+
+model Room {
+  id         String     @id @default(uuid())
+  name       String
+  users      RoomUser[]
+  created_At DateTime?
+  updated_At DateTime?
+}
+
+model RoomUser {
+  room_id    String
+  room       Room      @relation(fields: [room_id], references: [id])
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id])
+  role_id    Int
+  role       Role      @relation(fields: [role_id], references: [role_id])
+  created_At DateTime?
+  updated_At DateTime?
+
+  @@id([room_id, user_id])
 }

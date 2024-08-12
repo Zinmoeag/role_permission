@@ -7,7 +7,9 @@ import authMiddleWare, { AuthRequest } from "../middlewares/authMiddleware";
 import CheckRoleMiddleware from "../middlewares/checkRoleMiddleware";
 import dashboardRouter from "./dashboard";
 import oauthRouter from "./oauth";
-import VerifyEmail from "../service/Email/VerfifyEmail";
+import prisma from "../../prisma/client";
+import roomRouters from "./room";
+import requiredUser from "../middlewares/requiredUser";
 
 const router = Router();
 
@@ -21,24 +23,41 @@ router.use("/api/oauth", oauthRouter);
 router.use("/dashboard", authMiddleWare, CheckRoleMiddleware.isAdmin, dashboardRouter)
 router.use("/home", authMiddleWare, homeRouter);
 
-router.get("/testing", async (req : Request, res : Response, next : NextFunction) => {
-  // res.send("test route").status(200).end();
-  try{
-    const email  = new VerifyEmail({
-      name : "zin",
-      to : "user@gmail.com",
-      from : "admin@gmail.com",
-      mailObj : {
-        url : "http://localhost:3000/verificationCode"
-      }
-    });
+router.use("/room", authMiddleWare, requiredUser, roomRouters)
 
-    await email.send();    
-    res.sendStatus(200).end();
-  }catch(err){
-    console.log("error", err);
-    res.sendStatus(500).end();
-  }
+router.get("/testing", async (req : Request, res : Response, next : NextFunction) => {
+
+  const room = await prisma.room.findFirst({
+      where : {
+        id : "jfksdjfs"
+      },
+      include : {
+        users : {
+          include : {
+            user : {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                verify: true,
+                role: true,
+                password: false
+              }
+            },
+            role : {
+              select : {
+                role_id : true,
+                role_name : true,
+              }
+            }
+          }
+        },
+      }
+  })
+  console.log(room.users)
+  res.send("test route").status(200).end();
+  
 })
 
 // console.log(path.resolve(__dirname, "build", "index.html"));

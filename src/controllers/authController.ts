@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from "express";import { z } from "zod";
 import AuthService from "../service/authService";
-import AppError, { errorKinds, errorKindsType } from "../utils/AppError";
+import AppError, { errorKinds } from "../utils/AppError";
 import {LoginCredentialSchema , RegisterCredentialSchema, VerfyEmailSchema} from "../schema/authSchema";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import { LoginOrRequestVerfy, LoginResponse, RequestVerifyEmail } from "../types/authType";
-import { Result, returnStates } from "../types";
 
 const service = new AuthService();
 
@@ -89,13 +88,13 @@ class AuthController {
 
         // if account verified do login
         const {access_token, refresh_token, user} = account;
+        res.cookie("is_logIn", true, { httpOnly: true, secure: true });
         res.cookie("jwt", refresh_token, { httpOnly: true, secure: true });
         res.cookie("auth_access", access_token, { secure: true });
         
         return res.status(200).json({ auth_access : access_token, user }).end();
 
       }else{
-        console.log("verify");
         const {is_verfiy_email_sent} = account;
         //if account is not verified do verify process
         res.status(200).json({
@@ -141,6 +140,7 @@ class AuthController {
     next : NextFunction,
   ){
     res.clearCookie("jwt");
+    res.clearCookie("is_logIn");
     res.clearCookie("auth_access");
     res.status(204).json({message : "logout success"}).end()
   }

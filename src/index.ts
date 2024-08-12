@@ -18,8 +18,6 @@ const app = express();
 app.set('view engine', 'pug');
 app.set('views', '${__dirname}/views');
 
-console.log(`${__dirname}/views`);
-
 app.use(cors(corsOptions));
 app.use(logger);
 
