@@ -3,67 +3,78 @@ import { Router } from "express";
 import userRouters from "./user";
 import authRouter from "./auth";
 import homeRouter from "./home";
-import authMiddleWare, { AuthRequest } from "../middlewares/authMiddleware";
-import CheckRoleMiddleware from "../middlewares/checkRoleMiddleware";
+import  { AuthRequest, deserilizedUser, verifyRoles } from "../middlewares/authMiddleware";
 import dashboardRouter from "./dashboard";
 import oauthRouter from "./oauth";
-import prisma from "../../prisma/client";
 import roomRouters from "./room";
 import requiredUser from "../middlewares/requiredUser";
+import AppError, { errorKinds } from "../utils/AppError";
+import ErrorResponse from "../core/entitity/ErrorResponse";
+import redisClient from "../core/redis";
 
 const router = Router();
 
-router.get("/healthChecker", (req : Request , res : Response, next : NextFunction) => {
-  res.sendStatus(200).end();
-})
+router.get(
+  "/healthCheck",
+  (req: Request, res: Response, next: NextFunction) => {
+    res.sendStatus(200).end();
+  }
+);
 
 router.use(authRouter);
-router.use("/user", authMiddleWare, userRouters);
+// router.use("/user", , userRouters);
 router.use("/api/oauth", oauthRouter);
-router.use("/dashboard", authMiddleWare, CheckRoleMiddleware.isAdmin, dashboardRouter)
-router.use("/home", authMiddleWare, homeRouter);
 
-router.use("/room", authMiddleWare, requiredUser, roomRouters)
+router.use("/dashboard" , deserilizedUser , verifyRoles(["ADMIN"]), dashboardRouter);
 
-router.get("/testing", async (req : Request, res : Response, next : NextFunction) => {
+// router.use("/home", authMiddleWare, homeRouter);
 
-  const room = await prisma.room.findFirst({
-      where : {
-        id : "jfksdjfs"
-      },
-      include : {
-        users : {
-          include : {
-            user : {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatar: true,
-                verify: true,
-                role: true,
-                password: false
-              }
-            },
-            role : {
-              select : {
-                role_id : true,
-                role_name : true,
-              }
-            }
-          }
-        },
-      }
-  })
-  console.log(room.users)
-  res.send("test route").status(200).end();
-  
+// router.use("/room", authMiddleWare, requiredUser, roomRouters);
+
+router.get(
+  "/testing",
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    // const test = await redisClient.get("test-redis-node");
+    // console.log(test)
+
+    await redisClient.hSet("test-redis-hash:123", {
+      name: "test-redis-hash",
+      email: "test-redis-hash",
+      address: "test-redis-hash",
+    })
+    // return next(
+    //   AppError.new(errorKinds.badRequest, "Bad Request", {
+    //     email: ["emaiil"],
+    //   })
+    // );
+
+    res.sendStatus(200).end();
+  }
+);
+
+
+//404 handler
+router.use("*", (req: Request, res: Response, next: NextFunction) => {
+  AppError.new(errorKinds.notFound, "Not Found").response(res);  
 })
 
-// console.log(path.resolve(__dirname, "build", "index.html"));
-// not found route
-router.use((req: Request, res: Response, next: NextFunction) => {
-  res.send("page not found").status(404).end();
+// error handling
+router.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
+
+  console.log("err ===> ",err)
+  if (err instanceof AppError) {
+    return res
+      .status(err.getStatus())
+      .json(new ErrorResponse({
+          status: String(err.getStatus()),
+          message: err.message,
+          endpoint : req.url,
+          data: err.payload,
+        }),
+      )
+      .end();
+  }
 });
 
 export default router;

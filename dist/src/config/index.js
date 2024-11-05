@@ -3,9 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
 const application_1 = __importDefault(require("./application"));
-// console.log(applicationConfig);
 class AppConfig {
     constructor() { }
     static getInstance() {
@@ -25,6 +23,9 @@ class AppConfig {
         return this;
     }
     static getConfig(key) {
+        if (key === undefined || !(key in this.configs)) {
+            throw new Error(`Invalid config key: ${key}`);
+        }
         return this.configs[key];
     }
 }

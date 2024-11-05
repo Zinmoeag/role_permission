@@ -19,7 +19,10 @@ export const errorKinds = {
     notAuthorized : "notAuthorized",
     alreadyExist : "alreadyExist",
     forbidden : "forbidden",
+    accessDenied : "accessDenied",
+    unVerifyAccount : "unVerifyAccount",
     badRequest : "badRequest",
+    oauthAccoundAlreadyExist : "oauthAccoundAlreadyExist",
     mailboxUnavailable : "mailboxUnavailable"
 } as const;
 
@@ -30,13 +33,14 @@ export const isErrorKinds = (message : any) : message is errorKindsType => {
 }
 
 class AppError extends Error {
-     
+    public statusCode : number = StatusCode.InternalServerError;     
     constructor(
         public error : errorKindsType, 
         public message : string, 
         public payload? : payload | {},
     ) {
         super();
+        this.statusCode = this.getStatus();
     }
 
     static new(
@@ -57,46 +61,53 @@ class AppError extends Error {
     }
     
     getStatus(){
-        let error_status : StatusCode = StatusCode.InternalServerError;
+        // let error_status : StatusCode = StatusCode.InternalServerError;
         switch(this.error){
             case errorKinds.internalServerError : 
-                error_status = StatusCode.InternalServerError
+                this.statusCode = StatusCode.InternalServerError
                 break;
             case errorKinds.invalidToken : 
-                error_status = StatusCode.Forbidden
+                this.statusCode = StatusCode.Forbidden
                 break;
             case errorKinds.notFound : 
-                error_status = StatusCode.NotFound
+                this.statusCode = StatusCode.NotFound
                 break;
             case errorKinds.notAuthorized : 
-                error_status = StatusCode.Unauthorized
+                this.statusCode = StatusCode.Unauthorized
                 break;
             case errorKinds.validationFailed :
-                error_status = StatusCode.UnprocessableEntity
+                this.statusCode = StatusCode.UnprocessableEntity
                 break;
             case errorKinds.invalidCredential : 
-                error_status = StatusCode.UnprocessableEntity
+                this.statusCode = StatusCode.UnprocessableEntity
                 break;
             case errorKinds.alreadyExist : 
-                error_status = StatusCode.Conflict
+                this.statusCode = StatusCode.Conflict
                 break;
             case errorKinds.forbidden : 
-                error_status = StatusCode.Forbidden
+                this.statusCode = StatusCode.Forbidden
+                break;
+            case errorKinds.accessDenied :
+                this.statusCode = StatusCode.Forbidden
+                break;
+            case errorKinds.unVerifyAccount :
+                this.statusCode = StatusCode.Forbidden
+                break;
+            case errorKinds.oauthAccoundAlreadyExist :
+                this.statusCode = StatusCode.Conflict
                 break;
             case errorKinds.badRequest : 
-                error_status = StatusCode.BadRequest
+                this.statusCode = StatusCode.BadRequest
                 break;
             case errorKinds.mailboxUnavailable : 
-                error_status = StatusCode.MailboxUnavailable
+                this.statusCode = StatusCode.MailboxUnavailable
                 break;
         }
-        return error_status;
+        return this.statusCode;
     }
 
     response(res : Response){
-
-        const error_status = this.getStatus();
-        return res.status(error_status)
+        return res.status(this.statusCode)
             .json(this.errorPayload(this.payload)).end();
     }
 }

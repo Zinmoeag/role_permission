@@ -7,18 +7,11 @@ import { isExpired } from "../../helper";
 import { returnStates, Result } from "../../types"
 import { ReturnUser } from "../../types/user";
 import {z} from 'zod';
-import nodemailer from "nodemailer";
-
-type User = {
-    email : string,
-    name : string,
-    verify : boolean
-}
+import { User } from "../../core/entitity/User";
 
 type VerifiedUser = {
     verifiedUser : z.infer<typeof ReturnUser>
 }
-
 
 type VerificationCode = {
     unhashedVerificationCode : string,

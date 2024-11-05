@@ -16,6 +16,7 @@ model User {
   password                 String
   email                    String     @unique
   avatar                   String?
+  provider                 String     @default("LOCAL")
   roleId                   Int        @default(1)
   role                     Role       @relation(fields: [roleId], references: [role_id])
   verify                   Boolean    @default(false)

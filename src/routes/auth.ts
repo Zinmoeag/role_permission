@@ -1,22 +1,31 @@
 import { Router } from "express";
-import authController from "../controllers/authController";
-import authMiddleWare from "../middlewares/authMiddleware";
+import authController from "../controllers/localAuthController";
+import { allowedVerifiedUser, deserilizedUser, verifyRoles } from "../middlewares/authMiddleware";
+import validate from "../middlewares/vaildate";
+import {
+  LoginCredentialSchema,
+  RegisterCredentialSchema,
+  VerfyEmailSchema,
+} from "../schema/authSchema";
 
 const authRouter = Router();
 
-authRouter.get("/user", authMiddleWare, authController.getAuthUser);
+//router
 
-authRouter.post('/register', authController.register)
-
-authRouter.post("/login", authController.login);
-
-authRouter.post("/logout", authController.logout);
-
-authRouter.post("/refreshToken", authController.refreshTokenController);
-
-authRouter.post("/verify_email", authController.verifyAccount)
-
-// authRouter.get("/test", authMiddleWare, authController.getAuthUser)
+authRouter
+  .get("/user", deserilizedUser, authController.getAuthUser)
+  .post(
+    "/register",
+    validate(RegisterCredentialSchema),
+    authController.register
+  )
+  .post("/login", validate(LoginCredentialSchema), authController.login)
+  .post("/logout", authController.logout)
+  .post("/refreshToken", authController.refreshTokenController)
+  .post(
+    "/verify_email",
+    validate(VerfyEmailSchema),
+    authController.verifyAccount
+  );
 
 export default authRouter;
-

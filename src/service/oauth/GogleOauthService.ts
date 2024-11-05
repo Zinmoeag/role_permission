@@ -6,7 +6,8 @@ import axios from "axios";
 import { errorKinds } from "../../utils/AppError";
 import qs from "qs";
 
-class GoogleOauthService implements OauthServiceInterface<GoogleOauthToken>{    
+class GoogleOauthService implements OauthServiceInterface<GoogleOauthToken>{   
+    private provider = "GOOGLE"; 
     public async getOauthToken(code: string)  : Promise<GoogleOauthToken> {
         const options = {
             code,
@@ -47,6 +48,7 @@ class GoogleOauthService implements OauthServiceInterface<GoogleOauthToken>{
             })   
         
             return {
+                provider : this.provider,
                 name : data.name as string,
                 avatar : data.picture as string,
                 email : data.email as string,

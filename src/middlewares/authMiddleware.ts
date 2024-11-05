@@ -1,69 +1,114 @@
 import { Response, Request, NextFunction } from "express";
 import { verifyWithRS256 } from "../helper";
 import AppError, { errorKinds } from "../utils/AppError";
-import prisma from "../../prisma/client";
-import { ReturnUser } from "../types/user";
-import {z} from "zod";
-import { getUser } from "../utils/auth";
+import { TokenUser, User } from "../core/entitity/User";
+import UserRepository from "../core/infrastructure/UserRepository";
+import prisma, { UserWithRoleAndPermission } from "../../prisma/client";
+
+const userRepo = new UserRepository(prisma);
 
 export interface AuthRequest extends Request {
-    user : z.infer<typeof ReturnUser>
+  user?: User;
 }
 
-const authMiddleWare = async (
-    req : Request, 
-    res : Response, 
-    next : NextFunction
-    ) => {
 
-    const token = req.header("Authorization");
+/**
+ * middleware function that verify token
+ *  middleware function that deserilize user into request 
+ */
 
-    if(!token || !token.startsWith("Bearer ")) {
-        return AppError.new(errorKinds.notAuthorized , "Not Authorized").response(res);
+export const deserilizedUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {    
+
+    let access_token;
+
+      if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      access_token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies.auth_access) {
+      access_token = req.cookies.auth_access;
     }
-    const accessToken = token.split(" ")[1];
 
-    if(!accessToken){
-        return AppError.new(errorKinds.notAuthorized , "Not Authorized").response(res);
+    if (!access_token) {
+      return next(new AppError(errorKinds.notAuthorized, 'You are not logged in'));
     }
-    try{
-        const userFromToken : any = verifyWithRS256(accessToken, "ACCESS_TOKEN_PUBLIC_KEY");
+    
+    const decodedUser = verifyWithRS256<TokenUser>(access_token, "ACCESS_TOKEN_PUBLIC_KEY");
+    if (!decodedUser)
+      throw AppError.new(errorKinds.notAuthorized, "session expired");
 
-        if(!userFromToken){
-            return AppError.new(errorKinds.notAuthorized , "token is not present").response(res);
-        }
-        const user = await prisma.user.findUnique({
-            where : {
-                id : userFromToken.id
-            },
-            include : {
-                role : {
-                    include : {
-                        permissions : {
-                            include : {
-                                permission : true
-                            },
-                        }
-                    }
-                }
+    const user : UserWithRoleAndPermission = await userRepo.get({
+      where : {
+        id : decodedUser.id
+      },
+      include : {
+        role : {
+          include : {
+            permissions : {
+              include : {
+                permission : true
+              }
             }
-        });
-
-        if(!user) return AppError.new(errorKinds.notAuthorized, "token is not invalid").response(res);
-
-        const authReq = req as AuthRequest;
-        authReq.user = getUser(user);
-        
-    }catch(e){
-        console.log(e)
-        if(e instanceof AppError){
-            return e.response(res)
-        }else{
-            return AppError.new(errorKinds.internalServerError, "internal Server Error").response(res);
+          }
         }
+      }
+    })
+
+    req.user = new User(user);
+
+    next();
+  } catch (e) {
+    if (e instanceof AppError) {
+      next(e);
+    } else {
+      next(AppError.new(errorKinds.notAuthorized, "internal Server Error"));
     }
-    return next();
+  }
+};
+
+export const verifyRoles = (allowedRoles: any[]) => {
+  return function (req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.user || !req.user?.role_name)
+        throw AppError.new(errorKinds.forbidden, "User not allowed");
+
+      const isRoleAllow = allowedRoles.includes(req.user.role_name);
+      if (!isRoleAllow)
+        throw AppError.new(errorKinds.forbidden, "User not Allowed");
+
+      next()
+    } catch (e) {
+      if (e instanceof AppError) {
+        next(e);
+      } else {  
+        next(AppError.new(errorKinds.forbidden, "internal serer Error"));
+      }
+    }
+  };
+};
+
+
+export const allowedVerifiedUser = () => {
+  return function (req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.user || !req.user?.verify) {
+        throw AppError.new(errorKinds.unVerifyAccount, "Please Verify Your Account");
+      }
+      next();
+    } catch (e) {
+      if (e instanceof AppError) {
+        next(e);
+      } else {
+        next(AppError.new(errorKinds.notAuthorized, "internal Server Error"));
+      }
+    }
+  };
 }
 
-
-export default authMiddleWare;
+// export default authMiddleWare;

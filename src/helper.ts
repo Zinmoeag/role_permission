@@ -3,13 +3,14 @@ import AppConfig from "./config";
 import { ReturnUser } from "./types/user";
 import {z} from "zod";
 import AppError, { errorKinds } from "./utils/AppError";
+import { TokenUser } from "./core/entitity/User";
 
-export const signWithRS256 = (payload : z.infer<typeof ReturnUser>, key : "ACCESS_TOKEN_PRIVATE_KEY" | "REFRESH_TOKEN_PRIVATE_KEY", options : SignOptions) => {
+export const signWithRS256 = (payload : TokenUser, key : "ACCESS_TOKEN_PRIVATE_KEY" | "REFRESH_TOKEN_PRIVATE_KEY", options : SignOptions) => {
 
     const encodedPrivateKey = Buffer.from(AppConfig.getConfig(key), "base64").toString("ascii");
     
     const token = jwt.sign(
-        payload, 
+        {...payload}, 
         encodedPrivateKey ,
         {
             ...(options && options),
@@ -34,7 +35,7 @@ export const verifyWithRS256 = <T>(token : string, key : "ACCESS_TOKEN_PUBLIC_KE
     
         return decoded as T
     }catch(e){
-        throw AppError.new(errorKinds.invalidToken,"Invalid User")
+        throw AppError.new(errorKinds.invalidToken,"Session Timeout")
     }
 }
 

@@ -6,7 +6,6 @@ const validate = (Schema : z.Schema) => {
     return (req : Request, res : Response, next : NextFunction) => {
         const validation = Schema.safeParse(req.body);
         if(!validation.success){
-            console.log("failed")
             next(
                 AppError.new(
                     errorKinds.validationFailed, 

@@ -64,7 +64,7 @@ export default class GoogleOauthService {
                     Authorization : `Bearer ${id_token}`
                 }
             })
-            console.log("dd", data
+            console.log("dd", data)
             return data;
         }catch(err){
             throw AppError.new(errorKinds.badRequest, "no google user")

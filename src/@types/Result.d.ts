@@ -1,0 +1,1 @@
+export declare const Result = (s : string) => "hello world"

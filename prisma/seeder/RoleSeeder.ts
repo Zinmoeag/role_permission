@@ -27,7 +27,8 @@ class RoleSeeder extends SeederModel
                 })   
             }
         }catch(e){
-            console.log(e)
+            // console.log(e
+            // console.log(Result("failed"))
         }
     }
 }

@@ -40,6 +40,7 @@ export interface GitHubUser {
 
 
 export type OauthUser = {
+    provider : string,
     email: string,
     name: string,
     avatar: string | null,

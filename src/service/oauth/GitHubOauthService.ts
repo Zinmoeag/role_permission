@@ -9,6 +9,8 @@ import { ReturnToken } from "../../types/authType";
 
 class GitHubOauthService implements OauthServiceInterface<GitHubOauthToken> {
 
+    private provider = "GITHUB";
+
     public async getOauthToken(code: string): Promise<GitHubOauthToken> {
         const rootUrl = "https://github.com/login/oauth/access_token";
 
@@ -63,6 +65,7 @@ class GitHubOauthService implements OauthServiceInterface<GitHubOauthToken> {
             const primaryEmail = emailsData.data.find((email : GitHubUserEmail) => email.primary === true).email;
 
             return {
+                provider : this.provider,
                 name : data.name as string,
                 avatar : data.avatar_url as string,
                 email : primaryEmail as string,

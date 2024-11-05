@@ -1,5 +1,6 @@
 export const applicationConfig = {
     appUrl : process.env.APP_URL,
+    CLIENT_URL : "http://localhost:4000/",
     jwtSecretKey : process.env.JWT_SECRET_KEY,
 
     ACCESS_TOKEN_PRIVATE_KEY : process.env.ACCESS_TOKEN_PRIVATE_KEY,

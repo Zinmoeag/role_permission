@@ -4,6 +4,7 @@ import pug from 'pug'
 import {convert} from "html-to-text";
 import AppError, { errorKinds } from "../../utils/AppError";
 import { Result, returnStates } from "../../types";
+import View from "../../core/View";
 
 abstract class Email<T extends object>{
 
@@ -38,7 +39,8 @@ abstract class Email<T extends object>{
     }
 
     public async send() : Promise<Result<any, any>> {
-      const html = pug.renderFile(this.viewPath + this.viewFileName + `.pug`, this.mailObject);
+
+      const html = View.render(this.viewFileName, this.mailObject).getHtmlFile();
 
       try{
         const mailOptions = {
