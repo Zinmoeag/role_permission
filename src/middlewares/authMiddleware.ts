@@ -3,14 +3,16 @@ import { verifyWithRS256 } from "../helper";
 import AppError, { errorKinds } from "../utils/AppError";
 import { TokenUser, User } from "../core/entitity/User";
 import UserRepository from "../core/infrastructure/UserRepository";
-import prisma, { UserWithRoleAndPermission } from "../../prisma/client";
+import prisma, { UserWithRoleAndPermission, Permission } from "../../prisma/client";
+import PermissionRepository from "../core/infrastructure/PermissionRepository";
+import { Console } from "console";
 
 const userRepo = new UserRepository(prisma);
+const permissionRepo = new PermissionRepository(prisma);
 
 export interface AuthRequest extends Request {
   user?: User;
 }
-
 
 /**
  * middleware function that verify token
@@ -78,10 +80,6 @@ export const verifyRoles = (allowedRoles: any[]) => {
       if (!req.user || !req.user?.role_name)
         throw AppError.new(errorKinds.forbidden, "User not allowed");
 
-      const isRoleAllow = allowedRoles.includes(req.user.role_name);
-      if (!isRoleAllow)
-        throw AppError.new(errorKinds.forbidden, "User not Allowed");
-
       next()
     } catch (e) {
       if (e instanceof AppError) {
@@ -111,4 +109,36 @@ export const allowedVerifiedUser = () => {
   };
 }
 
-// export default authMiddleWare;
+export const checkPermission = (permission : Pick<Permission, "resource" | "action">) => {
+  return async function (req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userPermissions = await permissionRepo.findBy({
+        where : {
+          roles : {
+            some : {
+              role : {
+                role_name : req.user?.role_name
+              }
+            }
+          }
+        }
+      })
+
+      console.log("permission", userPermissions)
+
+      const isPermissionAllowed = userPermissions.some((userPermission) => 
+        userPermission.resource === permission.resource && userPermission.action === permission.action
+      )
+
+      if(!isPermissionAllowed) throw AppError.new(errorKinds.forbidden, "User not allowed to perform this action");
+      next()
+
+    } catch (e) {
+      if (e instanceof AppError) {
+        next(e);
+      } else {  
+        next(AppError.new(errorKinds.forbidden, "internal serer Error"));
+      }
+    }
+  }
+}

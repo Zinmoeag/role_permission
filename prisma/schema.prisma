@@ -42,11 +42,12 @@ model Permission {
 }
 
 model RolePermission {
-  id            String     @id @default(uuid())
-  role_id       Int        @unique
+  role_id       Int        
   role          Role       @relation(fields: [role_id], references: [role_id])
-  permission_id String     @default(uuid())
+  permission_id String     
   permission    Permission @relation(fields: [permission_id], references: [id])
+
+  @@id([role_id, permission_id])
 }
 
 model Room {

@@ -17,6 +17,9 @@ export type UserWithRoleAndPermission = Prisma.UserGetPayload<{
     }
 }>
 
+
+export type Permission = Prisma.PermissionGroupByOutputType
+
 // export type Userdd = Prisma.UserFindUniqueArgs;
 
 
