@@ -9,8 +9,20 @@ class UserRepository {
     this.prisma = prisma;
   }
 
+  count = async () => {
+    return await this.prisma.user.count();
+  }
+
   get = async (arg : Prisma.UserFindUniqueArgs): Promise<any> => {
     return await this.prisma.user.findUnique(arg);
+  };
+
+  getAll = async (arg : Prisma.UserFindManyArgs): Promise<any> => {
+    try{
+      return await this.prisma.user.findMany(arg);
+    }catch(e){
+      throw AppError.new(errorKinds.internalServerError, "Prisma Error")
+    }
   };
 
   create = async (args : Prisma.UserCreateArgs): Promise<any> => {

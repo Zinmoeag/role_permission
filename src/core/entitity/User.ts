@@ -1,4 +1,5 @@
-import { Permission } from "./Permission";
+import { UserWithRoleAndPermission } from "../../../prisma/client";
+import { Permission } from "@prisma/client";
 
 export class RawUser {
   public id: string;
@@ -40,13 +41,29 @@ export class User {
   name: string;
   verify: boolean;
   email: string;
-  avatar: string;
+  avatar: string | null;
   role_name: string;
 
-  constructor(data: any) {
+  constructor(data: UserWithRoleAndPermission) {
     this.id = data.id;
     this.name = data.name;
     this.verify = data.verify;
+    this.email = data.email;
+    this.avatar = data.avatar;
+    this.role_name = data.role.role_name;
+  }
+}
+
+export class DisplayUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  role_name: string;
+
+  constructor(data: UserWithRoleAndPermission) {
+    this.id = data.id;
+    this.name = data.name;  
     this.email = data.email;
     this.avatar = data.avatar;
     this.role_name = data.role.role_name;

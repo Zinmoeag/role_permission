@@ -5,7 +5,6 @@ import { TokenUser, User } from "../core/entitity/User";
 import UserRepository from "../core/infrastructure/UserRepository";
 import prisma, { UserWithRoleAndPermission, Permission } from "../../prisma/client";
 import PermissionRepository from "../core/infrastructure/PermissionRepository";
-import { Console } from "console";
 
 const userRepo = new UserRepository(prisma);
 const permissionRepo = new PermissionRepository(prisma);

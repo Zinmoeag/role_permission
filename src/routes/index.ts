@@ -22,13 +22,12 @@ router.get(
 );
 
 router.use(authRouter);
-// router.use("/user", , userRouters);
 router.use("/api/oauth", oauthRouter);
 
 router.use(
   "/dashboard",
-  deserilizedUser,
-  verifyRoles(["ADMIN"]),
+  // deserilizedUser,
+  // verifyRoles(["ADMIN"]),
   dashboardRouter
 );
 

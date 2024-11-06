@@ -108,6 +108,7 @@ class AuthController {
     }
   }
 
+
   logout(req: Request, res: Response, next: NextFunction) {
     service.logout(res);
 
