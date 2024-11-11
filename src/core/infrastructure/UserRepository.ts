@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import AppError from "../../utils/AppError";
 import { errorKinds } from "../../utils/AppError";
 
@@ -9,17 +9,23 @@ class UserRepository {
     this.prisma = prisma;
   }
 
-  count = async () => {
-    return await this.prisma.user.count();
+  count = async (args ?: Prisma.UserCountArgs) => {
+    return await this.prisma.user.count(args);
   }
 
   get = async (arg : Prisma.UserFindUniqueArgs): Promise<any> => {
-    return await this.prisma.user.findUnique(arg);
+    try {
+      return await this.prisma.user.findUnique(arg);
+    }catch(err){
+      throw AppError.new(errorKinds.internalServerError, "Prisma Error")
+    }
   };
 
   getAll = async (arg : Prisma.UserFindManyArgs): Promise<any> => {
     try{
-      return await this.prisma.user.findMany(arg);
+      return await this.prisma.user.findMany({
+        ...arg,
+      });
     }catch(e){
       throw AppError.new(errorKinds.internalServerError, "Prisma Error")
     }

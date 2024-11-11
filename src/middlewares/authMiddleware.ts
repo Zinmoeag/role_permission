@@ -62,7 +62,6 @@ export const deserilizedUser = async (
     })
 
     req.user = new User(user);
-
     next();
   } catch (e) {
     if (e instanceof AppError) {

@@ -13,7 +13,7 @@ class Pagination<PaginationData extends object[]> {
   public count: number = 0;
 
   public paginatedData: PaginationData | [] = [];
-
+ 
   public nextPage: sublingPage | null = null;
   public prevPage: sublingPage | null = null;
   public startPage: sublingPage | null = { page: 1, limit: this.limit };

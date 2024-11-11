@@ -4,27 +4,27 @@ import UserSeeder from "./UserSeeder";
 import PersmissionSeeder from "./permissionSeeder";
 import SeederModel from "./model/SeederModel";
 
-const seeders : SeederModel[] = [
-    new RoleSeeder(),
-    new UserSeeder(),
-    new PersmissionSeeder(),
-]
+const seeders: SeederModel[] = [
+  new RoleSeeder(),
+  new UserSeeder(),
+  new PersmissionSeeder(),
+];
 
 const main = async () => {
-    for(const seeder of seeders){
-        try{
-            await seeder.seed();
-        }catch(e){
-            console.log(e)
-        }
+  for (const seeder of seeders) {
+    try {
+      await seeder.seed();
+    } catch (e) {
+      console.log(e);
     }
-}
+  }
+};
 
 main()
-    .then( async () => {
-        await prisma.$disconnect();
-    })
-    .catch(async (e) => {
-        console.log(e)
-        await prisma.$disconnect();
-    })
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.log(e);
+    await prisma.$disconnect();
+  });

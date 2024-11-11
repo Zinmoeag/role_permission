@@ -11,7 +11,6 @@ import {
 const authRouter = Router();
 
 //router
-
 authRouter
   .get("/user", deserilizedUser, authController.getAuthUser)
   .post(
