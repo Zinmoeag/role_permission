@@ -11,8 +11,11 @@ import oauthRouter from "./oauth";
 import AppError, { errorKinds } from "../utils/AppError";
 import ErrorResponse from "../core/entitity/ErrorResponse";
 import redisClient from "../core/redis";
+import UserController from "../controllers/UserController";
 
 const router = Router();
+
+const userController = new UserController();
 
 router.get(
   "/healthCheck",
@@ -33,24 +36,10 @@ router.use(
 
 router.get(
   "/testing",
-  async (req: Request, res: Response, next: NextFunction) => {
-    // const test = await redisClient.get("test-redis-node");
-    // console.log(test)
-
-    await redisClient.hSet("test-redis-hash:123", {
-      name: "test-redis-hash",
-      email: "test-redis-hash",
-      address: "test-redis-hash",
-    });
-    // return next(
-    //   AppError.new(errorKinds.badRequest, "Bad Request", {
-    //     email: ["emaiil"],
-    //   })
-    // );
-
-    res.sendStatus(200).end();
-  }
+  userController.getUserExcelData
 );
+
+
 
 //404 handler
 router.use("*", (req: Request, res: Response, next: NextFunction) => {
